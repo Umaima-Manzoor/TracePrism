@@ -1,7 +1,5 @@
 import sys              # for sys.settrace
 import copy             # for deepcopy
-import json             # for json.dumps & json.loads for converting dict to string and vice versa
-
 
 class Tracer:
 
