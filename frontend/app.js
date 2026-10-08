@@ -82,7 +82,7 @@ updateLineNumbers();        // for the placeholder code
 // active line highlighting
 let currentHighlightedLine = null;
 
-function highlightLine(lineNumber) {
+function highlightLine(lineNumber, isScrollEvent = false) {     //flag to identify source of trigger
     currentHighlightedLine = lineNumber;
 
     if (!lineNumber || lineNumber <= 0) {
@@ -93,8 +93,14 @@ function highlightLine(lineNumber) {
     const lineHeight = 24;       // matches --line-height-code in style.css
     const paddingTop = 14;        // matches editor-container padding-top in style.css
     const scrollOffset = DOM.codeInput.scrollTop;
-
     const topPosition = paddingTop + (lineNumber - 1) * lineHeight - scrollOffset;
+
+    // Toggle transition based on trigger to prevent scrolling delay
+    if (isScrollEvent) {
+        DOM.lineHighlight.style.transition = 'none';            // disable gliding transition during scrolls
+    } else {
+        DOM.lineHighlight.style.transition = 'top 120ms cubic-bezier(0.22, 1, 0.36, 1)';  // restore spring glide on steps
+}
 
     DOM.lineHighlight.style.display = 'block';
     DOM.lineHighlight.style.top = topPosition + 'px';
@@ -103,6 +109,6 @@ function highlightLine(lineNumber) {
 // Keep highlight aligned when scrolling
 DOM.codeInput.addEventListener('scroll', () => {
     if (currentHighlightedLine) {
-        highlightLine(currentHighlightedLine);
+        highlightLine(currentHighlightedLine, true);            // pass true to instantly lock coordinate on scroll
     }
 });
