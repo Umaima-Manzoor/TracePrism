@@ -340,11 +340,11 @@ html, body {
 
 .var-chip[data-type="NoneType"] .var-chip-value { color: var(--type-none); }
 
-/* Changed Variable Glow Keyframe Animation */
+/* Changed Variable Glow Keyframe Animation (Champagne Gold Flash) */
 @keyframes chipFlash {
     0% {
         border-color: var(--accent-lime);
-        background-color: rgba(226, 255, 58, 0.08);
+        background-color: rgba(191, 161, 129, 0.15); /* Translucent Champagne Gold */
     }
     100% {
         border-color: var(--border-color);
@@ -378,7 +378,7 @@ html, body {
 
 .stack-frame.active-frame {
     border-color: var(--accent-cyan);
-    background-color: rgba(58, 245, 226, 0.06);
+    background-color: rgba(138, 168, 160, 0.06);
 }
 
 .frame-func {
