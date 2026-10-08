@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TracePrism - Interactive Code & Memory Visualizer</title>
+    
+    <!-- Google Fonts: Inter (UI) & JetBrains Mono (Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">      <!-- show text using default system font then swap to custom font once it loads -->
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="header">     <!-- Header Bar -->
+            <div class="header-brand">
+                <span class="logo-icon">🔮</span>
+                <h1 class="logo-title">TracePrism</h1>
+                <span class="tagline">Refracting code execution into clear, animated understanding</span>
+            </div>
+            <div class="header-actions">
+                <button id="btn-trace" class="btn btn-primary">
+                    <span class="btn-icon">⚡</span> Run Trace
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace (Grid: Left Editor, Right Visualizers) -->
+        <main class="workspace">
+            <!-- Left Panel: Code Input & Stepper -->
+            <section class="panel panel-editor">
+                <div class="panel-header">
+                    <span class="panel-title">Source Code (Python)</span>
+                    <span id="step-indicator" class="badge">Step 0 / 0</span>
+                </div>
+                <div class="editor-wrapper">
+                    <!-- Line Numbers Gutter -->
+                    <div id="line-numbers" class="line-numbers">1</div>
+                    <!-- Code Textarea -->
+                    <textarea id="code-input" class="code-input" spellcheck="false">def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+result = factorial(3)</textarea>
+                    <!-- Visual Line Highlight Overlay -->
+                    <div id="line-highlight" class="line-highlight"></div>
+                </div>
+            </section>
+
+            <!-- Right Panel: State Visualizers (Vars on Top, Stack on Bottom) -->
+            <section class="panel-group">
+                <!-- Top Right: Variables Panel -->
+                <section class="panel panel-variables">
+                    <div class="panel-header">
+                        <span class="panel-title">Active Variables (Scope)</span>
+                        <span id="var-count" class="badge badge-subtle">0 variables</span>
+                    </div>
+                    <div id="variables-container" class="variables-grid">
+                        <div class="empty-state">Variables will appear here during execution</div>
+                    </div>
+                </section>
+
+                <!-- Bottom Right: Call Stack Panel -->
+                <section class="panel panel-stack">
+                    <div class="panel-header">
+                        <span class="panel-title">Call Stack</span>
+                        <span id="stack-depth" class="badge badge-subtle">Depth: 0</span>
+                    </div>
+                    <div id="stack-container" class="stack-list">
+                        <div class="empty-state">Stack frames will appear here during execution</div>
+                    </div>
+                </section>
+            </section>
+        </main>
+
+        <!-- Bottom Playback Control Bar -->
+        <footer class="controls-bar">
+            <div class="controls-group">
+                <button id="btn-first" class="btn btn-control" title="Jump to start (Home)">⏮</button>
+                <button id="btn-prev" class="btn btn-control" title="Previous step (Left Arrow)">◀ Prev</button>
+                <button id="btn-play" class="btn btn-control btn-play" title="Auto-play (Space)">▶ Play</button>
+                <button id="btn-next" class="btn btn-control" title="Next step (Right Arrow)">Next ▶</button>
+                <button id="btn-last" class="btn btn-control" title="Jump to end (End)">⏭</button>
+            </div>
+
+            <!-- Progress Bar / Scrubber -->
+            <div class="scrubber-wrapper">
+                <input type="range" id="timeline-slider" class="timeline-slider" min="0" max="0" value="0">
+            </div>
+
+            <!-- Speed Control -->
+            <div class="speed-group">
+                <label for="speed-select" class="speed-label">Speed:</label>
+                <select id="speed-select" class="speed-select">
+                    <option value="1500">0.5x (Slow)</option>
+                    <option value="800" selected>1.0x (Normal)</option>
+                    <option value="400">2.0x (Fast)</option>
+                    <option value="150">4.0x (Turbo)</option>
+                </select>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="visualizer.js"></script>
+    <script src="controls.js"></script>
+</body>
+</html>
