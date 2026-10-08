@@ -55,3 +55,26 @@ DOM.speedSelect.addEventListener('change', () => {
 DOM.speedSelect.addEventListener('blur', () => {
     isDropdownOpen = false;             // Resets state if user clicks outside to close
 });
+
+// line numbers
+function updateLineNumbers() {          // reads current text -> calculates lines
+    const code = DOM.codeInput.value;
+    const lineCount = code.split('\n').length;
+    let numbersString = '';
+
+    for (let i = 1; i <= lineCount; i++) {
+        numbersString += i + '\n';
+    }
+
+    DOM.lineNumbers.innerText = numbersString;
+}
+
+//scroll sync
+function syncGutterScroll() {
+    DOM.lineNumbers.scrollTop = DOM.codeInput.scrollTop;
+}
+
+DOM.codeInput.addEventListener('input', updateLineNumbers);     // on every text change
+DOM.codeInput.addEventListener('scroll', syncGutterScroll);
+
+updateLineNumbers();        // for the placeholder code
