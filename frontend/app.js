@@ -1,6 +1,7 @@
 // global - single source of truth
 const AppState = {
     snapshots: [],              // holds the full array of execution snapshots from API
+    reconstructedLocals: [],    // pre-computed full variables for every step (O(1) lookup)    
     totalSteps: 0,              // cached count of snapshots
     currentStep: -1,            // index of currently displayed snapshot (-1 means idle)
     isPlaying: false,           // true if auto-play is currently running
