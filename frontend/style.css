@@ -1,30 +1,30 @@
 :root {
-    /* Background Palette (Night Shift) */
-    --bg-app: #10131a;
-    --bg-pane: #1a1d24;
-    --bg-pane-header: #22262f;
-    --bg-element: #2b303b;
-    --bg-element-hover: #363c4a;
+    /* Background Palette (Midnight Silk) */
+    --bg-app: #0e0f12;                  /* Deep midnight blue-black */
+    --bg-pane: #16181e;                 /* Dark silk panel */
+    --bg-pane-header: #1e2028;
+    --bg-element: #282a34;
+    --bg-element-hover: #343744;
 
     /* Text Palette */
-    --text-main: #f3f4f6;
-    --text-muted: #9ca3af;
-    --text-dim: #5f6577;
+    --text-main: #ede8df;               /* Champagne cream */
+    --text-muted: #96908a;
+    --text-dim: #585450;
 
     /* Brand & Accent Colors */
-    --accent-lime: #efff4f;
-    --accent-lime-dim: #d4e345;
-    --accent-cyan: #38bdf8;
-    --accent-coral: #f87171;
+    --accent-lime: #bfa181;             /* Muted Champagne Gold - understated luxury */
+    --accent-lime-dim: #a68b6e;
+    --accent-cyan: #8aa8a0;             /* Muted celadon */
+    --accent-coral: #c07a72;            /* Muted clay */
 
-    /* Data Type Color Coding */
-    --type-int: #efff4f;       /* Laser lemon */
-    --type-float: #38bdf8;     /* Sky blue */
-    --type-str: #4ade80;       /* Green */
-    --type-bool: #f87171;      /* Red */
-    --type-list: #fb923c;      /* Orange */
-    --type-dict: #c084fc;      /* Purple */
-    --type-none: #9ca3af;      /* Gray */
+    /* Data Type Jewel Tones */
+    --type-int: #bfa181;                /* Champagne */
+    --type-float: #a0aab8;              /* Sterling */
+    --type-str: #82a88e;                /* Jade */
+    --type-bool: #c07a72;               /* Coral */
+    --type-list: #7898b8;               /* Steel blue */
+    --type-dict: #a088b0;               /* Wisteria */
+    --type-none: #96908a;               /* Stone */
 
     /* Typography */
     --font-ui: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -33,8 +33,8 @@
     --font-size-code: 14px;
 
     /* Borders & Radii */
-    --border-color: #2b303b;
-    --border-strong: #3f4656;
+    --border-color: #1e2028;
+    --border-strong: #2e3040;
     --radius-sm: 3px;
     --radius-md: 6px;
     --radius-lg: 10px;
