@@ -206,19 +206,19 @@ html, body {
     z-index: 2;
 }
 
-/* Gliding Active Line Highlight Overlay */
+/* Gliding Active Line Highlight (Combined Solid Ruler & Left Gutter Bracket) */
 .line-highlight {
     position: absolute;
-    left: 48px;             /* Offset past line numbers gutter */
+    left: 48px;             /* Aligns perfectly past the 48px line numbers gutter */
     right: 0;
     top: 14px;              /* Starts at line 1 */
     height: var(--line-height-code);
-    background-color: rgba(226, 255, 58, 0.08);
-    border-left: 2px solid var(--accent-lime);
-    pointer-events: none;
+    background-color: var(--bg-element); /* Solid warm-indigo-gray runway (Concept 1) */
+    border-left: 4px solid var(--accent-lime); /* Thick, solid Crown Gold left bracket (Concept 3) */
+    pointer-events: none;   /* Allows clicking/selecting text through the highlight */
     transition: top var(--transition-fast);
-    z-index: 1;
-    display: none;          /* Shown during trace stepping */
+    z-index: 1;             /* Sits behind text (z-index: 2) but above background */
+    display: none;          /* Controlled by JS */
 }
 
 /* unified execution canvas */

@@ -78,3 +78,31 @@ DOM.codeInput.addEventListener('input', updateLineNumbers);     // on every text
 DOM.codeInput.addEventListener('scroll', syncGutterScroll);
 
 updateLineNumbers();        // for the placeholder code
+
+// active line highlighting
+let currentHighlightedLine = null;
+
+function highlightLine(lineNumber) {
+    currentHighlightedLine = lineNumber;
+
+    if (!lineNumber || lineNumber <= 0) {
+        DOM.lineHighlight.style.display = 'none';
+        return;
+    }
+
+    const lineHeight = 24;       // matches --line-height-code in style.css
+    const paddingTop = 14;        // matches editor-container padding-top in style.css
+    const scrollOffset = DOM.codeInput.scrollTop;
+
+    const topPosition = paddingTop + (lineNumber - 1) * lineHeight - scrollOffset;
+
+    DOM.lineHighlight.style.display = 'block';
+    DOM.lineHighlight.style.top = topPosition + 'px';
+}
+
+// Keep highlight aligned when scrolling
+DOM.codeInput.addEventListener('scroll', () => {
+    if (currentHighlightedLine) {
+        highlightLine(currentHighlightedLine);
+    }
+});
