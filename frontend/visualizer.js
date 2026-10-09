@@ -59,49 +59,129 @@ function precomputeAllLocals() {
     }
 }
 
-// converting variable object into html
-function renderVariables(stepIndex) {
-    if (stepIndex < 0 || !AppState.reconstructedLocals || !AppState.reconstructedLocals[stepIndex]) {
-        return '';
+// master unified canvas orchestrator - renders complete state for any step
+function renderStep(stepIndex) {
+    // idle state - reset everything to default
+    if (stepIndex < 0 || !AppState.snapshots || !AppState.snapshots[stepIndex]) {
+        highlightLine(null);
+        DOM.vizCanvas.classList.remove('canvas-active');        // dark bg
+        DOM.vizCanvas.innerHTML = `
+            <div class="canvas-placeholder">
+                <span class="placeholder-title">No Active Execution</span>
+                <span class="placeholder-sub">Click "Run Trace" to visualize runtime execution</span>
+            </div> 
+        `;
+        DOM.stepIndicator.innerText = 'READY';
+        DOM.vizMode.innerText = 'IDLE';
+        DOM.stepCounter.innerText = '0 / 0';
+        return;
     }
 
-    const currentLocals = AppState.reconstructedLocals[stepIndex];
-    const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};        // previous step for comparison/updates checking
-    const varNames = Object.keys(currentLocals);    // array of var name strings
+    AppState.currentStep = stepIndex;
+    const snapshot = AppState.snapshots[stepIndex];
 
-    if (varNames.length === 0) {
-        return '';
-    }
+    highlightLine(snapshot.line);       // current line
 
-    let chipsHTML = '';
+    // updating headers and slider
+    DOM.stepIndicator.innerText = `STEP ${stepIndex + 1} / ${AppState.totalSteps}`;
+    DOM.stepCounter.innerText = `${stepIndex + 1} / ${AppState.totalSteps}`;
+    DOM.timelineSlider.value = stepIndex;
 
-    for (const name of varNames) {
-        const value = currentLocals[name];
-        const type = getVariableType(value);
-        const formattedValue = formatVariableValue(value);
+    DOM.vizCanvas.classList.add('canvas-active');       // lighter bg for animation
 
-        // Check if value mutated or is newly declared
-        const isNew = !(name in previousLocals);
-        const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);     // to compre strings not memories
-        const changeClass = (isNew || isChanged) ? ' chip-changed' : '';
+    // build variables section (only if variables exist at this step)
+    let varsHTML = '';
+    const currentLocals = AppState.reconstructedLocals[stepIndex] || {};
+    const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};
+    const varNames = Object.keys(currentLocals);
 
-        chipsHTML += `
-            <div class="var-chip${changeClass}" data-type="${type}">
-                <div class="var-chip-head">
-                    <span class="var-chip-name">${name}</span>
-                    <span class="var-chip-type">${type}</span>
+    if (varNames.length > 0) {
+        let chipsHTML = '';
+        for (const name of varNames) {
+            const value = currentLocals[name];
+            const type = getVariableType(value);
+            const formattedValue = formatVariableValue(value);
+
+            const isNew = !(name in previousLocals);
+            const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);     // compare strings not memory refs
+            const changeClass = (isNew || isChanged) ? ' chip-changed' : '';
+
+            chipsHTML += `
+                <div class="var-chip${changeClass}" data-type="${type}">
+                    <div class="var-chip-head">
+                        <span class="var-chip-name">${name}</span>
+                        <span class="var-chip-type">${type}</span>
+                    </div>
+                    <div class="var-chip-value">${formattedValue}</div>
                 </div>
-                <div class="var-chip-value">${formattedValue}</div>
+            `;
+        }
+        varsHTML = `
+            <div class="viz-section">
+                <div class="viz-section-label">Active Variables (${varNames.length})</div>
+                <div class="var-chips">${chipsHTML}</div>
             </div>
         `;
     }
 
-    return `
-        <div class="viz-section">
-            <div class="viz-section-label">Active Variables (${varNames.length})</div>
-            <div class="var-chips">
-                ${chipsHTML}
+    // build call stack section (only if inside a function call)
+    let stackHTML = '';
+    const stack = snapshot.stack || [];
+
+    if (stack.length > 1) {
+        let framesHTML = '';
+        for (let i = 0; i < stack.length; i++) {
+            const funcName = stack[i];
+            const isActive = (i === stack.length - 1);      // last element is the currently executing function
+            const activeClass = isActive ? ' active-frame' : '';
+            const arrow = isActive ? '<span class="frame-arrow">▶</span> ' : '';
+            const lineInfo = isActive ? `line ${snapshot.line}` : 'paused';     // parent funcs are paused - waiting for child to return
+
+            framesHTML += `
+                <div class="stack-frame${activeClass}">
+                    <span class="frame-func">${arrow}${funcName}</span>
+                    <span class="frame-line">${lineInfo}</span>
+                </div>
+            `;
+        }
+        stackHTML = `
+            <div class="viz-section">
+                <div class="viz-section-label">Call Stack (Depth: ${stack.length})</div>
+                <div class="stack-frames">${framesHTML}</div>
             </div>
-        </div>
-    `;
+        `;
+    }
+
+    // build exception section (only if this step threw an error)
+    let errorHTML = '';
+    if (snapshot.exception) {
+        errorHTML = `
+            <div class="viz-section">
+                <div class="viz-section-label" style="color: var(--accent-coral);">Exception Raised</div>
+                <div class="var-chip" data-type="bool" style="border-color: var(--accent-coral);">
+                    <div class="var-chip-head">
+                        <span class="var-chip-name" style="color: var(--accent-coral);">${snapshot.exception.type}</span>
+                        <span class="var-chip-type" style="color: var(--accent-coral);">ERROR</span>
+                    </div>
+                    <div class="var-chip-value">${snapshot.exception.message}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // update mode tag based on what is being displayed
+    if (snapshot.exception) {
+        DOM.vizMode.innerText = 'EXCEPTION';
+    } else if (varsHTML && stackHTML) {
+        DOM.vizMode.innerText = 'VARS + STACK';
+    } else if (stackHTML) {
+        DOM.vizMode.innerText = 'CALL STACK';
+    } else if (varsHTML) {
+        DOM.vizMode.innerText = 'VARIABLES';
+    } else {
+        DOM.vizMode.innerText = 'RUNNING';
+    }
+
+    // inject everything into unified canvas in one DOM update
+    DOM.vizCanvas.innerHTML = errorHTML + varsHTML + stackHTML;
 }
