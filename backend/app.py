@@ -13,12 +13,10 @@ except ImportError:
         from python.tracer import Tracer
         from python.processor import DeltaProcessor
 
-app = Flask(__name__)       # location of current module - to establish relative paths - app is the web server
-CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server
 
 # location of current module - to establish relative paths - app is the web server
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
+app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server
 
 # ── FRONTEND ROUTES ─────────────────────────────────────────────────────────
