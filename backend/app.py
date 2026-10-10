@@ -9,35 +9,33 @@ try:
     from backend.python.tracer import Tracer
     from backend.python.processor import DeltaProcessor
 except ImportError:
-    from python.tracer import Tracer
-    from python.processor import DeltaProcessor
+    try:
+        from python.tracer import Tracer
+        from python.processor import DeltaProcessor
+    except ImportError:
+        from tracer import Tracer
+        from processor import DeltaProcessor
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
 
-# Serverless-safe IP getter (handles Vercel X-Forwarded-For headers)
 def get_client_ip():
     if request.headers.getlist("X-Forwarded-For"):
         return request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
     return request.remote_addr or "127.0.0.1"
 
 limiter = Limiter(
-    key_func=get_client_ip,             # safe IP resolver for cloud serverless
+    key_func=get_client_ip,
     app=app,
     default_limits=["100 per minute"],
-    storage_uri="memory://"             # storing counters in RAM
+    storage_uri="memory://"
 )
 
 tracer = Tracer()
 processor = DeltaProcessor(keyframe_interval=100)
 CACHE = {}
 
-# ── API ENDPOINTS (SUPPORTING BOTH /api/ PATHS AND DIRECT PATHS) ────────────
 
-@app.route('/health', methods=['GET'])
-@app.route('/api/health', methods=['GET'])
-@app.route('/api/index/health', methods=['GET'])
-@limiter.exempt
 def health_check():
     return jsonify({
         'status': 'healthy',
@@ -45,22 +43,17 @@ def health_check():
     }), 200
 
 
-@app.route('/api/trace', methods=['POST'])
-@app.route('/trace', methods=['POST'])
-@app.route('/api/index/trace', methods=['POST'])
-@app.route('/api/index', methods=['POST'])
-@limiter.limit("30 per minute")
 def trace_code():
-    data = request.get_json()       # json body to py dict
+    data = request.get_json(silent=True) or {}
 
-    if not data or 'code' not in data:      # frontend sent the request in the wrong format
+    if not data or 'code' not in data:
         return jsonify({
             'error': True,
             'message': 'Missing "code" in request body.'
         }), 400
 
     source_code = data.get('code', '')
-    language = data.get('language', 'python')       # for future expansion for other languages
+    language = data.get('language', 'python')
 
     if language != 'python':
         return jsonify({
@@ -84,7 +77,7 @@ def trace_code():
     raw_result = tracer.trace(source_code)
 
     if raw_result.get('error') and raw_result.get('error_type') == 'SyntaxError':
-        return jsonify(raw_result), 200     # so ui can highlight the error
+        return jsonify(raw_result), 200
 
     compressed_snapshots = processor.process(raw_result['snapshots'])
 
@@ -105,6 +98,20 @@ def trace_code():
     }
 
     return jsonify(response_payload), 200
+
+
+# ── UNIVERSAL ROUTE HANDLER (CATCHES ALL URLS & DISPATCHES BY METHOD) ───────
+
+@app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
+@limiter.exempt
+def universal_handler(path):
+    if request.method == 'OPTIONS':
+        return '', 204
+    if request.method == 'POST':
+        return trace_code()
+    return health_check()
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
