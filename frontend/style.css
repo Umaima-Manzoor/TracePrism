@@ -130,6 +130,11 @@ html, body {
     overflow: hidden;
 }
 
+/* Active trace state: entire canvas pane shifts to lighter background */
+.canvas-pane.canvas-active {
+    background-color: #1e2028;          /* Noticeably lighter than #0e0f12 */
+}
+
 .pane-header {
     display: flex;
     align-items: center;
@@ -548,6 +553,21 @@ html, body {
     background: var(--accent-lime);
     border: none;
     cursor: pointer;
+}
+
+/* Keyboard shortcut hint */
+.kbd-hint {
+    font-size: 14px;
+    color: var(--text-dim);
+    cursor: help;
+    margin-left: 8px;
+    opacity: 0.5;
+    transition: opacity var(--transition-fast);
+}
+
+.kbd-hint:hover {
+    opacity: 1;
+    color: var(--text-muted);
 }
 
 /* Deck Meta (step counter and speed dropdown) */

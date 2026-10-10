@@ -64,7 +64,7 @@ function renderStep(stepIndex) {
     // idle state - reset everything to default
     if (stepIndex < 0 || !AppState.snapshots || !AppState.snapshots[stepIndex]) {
         highlightLine(null);
-        DOM.vizCanvas.classList.remove('canvas-active');        // dark bg
+        DOM.vizCanvas.parentElement.classList.remove('canvas-active');        // dark bg
         DOM.vizCanvas.innerHTML = `
             <div class="canvas-placeholder">
                 <span class="placeholder-title">No Active Execution</span>
@@ -87,7 +87,7 @@ function renderStep(stepIndex) {
     DOM.stepCounter.innerText = `${stepIndex + 1} / ${AppState.totalSteps}`;
     DOM.timelineSlider.value = stepIndex;
 
-    DOM.vizCanvas.classList.add('canvas-active');       // lighter bg for animation
+    DOM.vizCanvas.parentElement.classList.add('canvas-active');       // lighter bg for animation
 
     // build variables section (only if variables exist at this step)
     let varsHTML = '';
