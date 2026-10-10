@@ -58,9 +58,6 @@ async function runTrace() {
 
         precomputeAllLocals();                  // Pre-compute O(1) state array
 
-        // Store output in AppState for visualizer to access
-        AppState.output = data.output || '';
-
         // Set up scrubber max and render first meaningful step
         DOM.timelineSlider.max = AppState.totalSteps - 1;
         renderStep(0);

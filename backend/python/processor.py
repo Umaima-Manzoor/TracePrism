@@ -19,6 +19,8 @@ class DeltaProcessor:
                 'func_name': snap['func_name'],
                 'stack': snap['stack'],
                 'return_value': snap.get('return_value'),
+                'step_output': snap.get('step_output', ''),       # per-step output chunk
+                'exception': snap.get('exception'),               # preserve exception info
                 'is_keyframe': is_keyframe,
             }
 

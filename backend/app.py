@@ -5,8 +5,8 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from backend.python.tracer import Tracer          # updated import path
-from backend.python.processor import DeltaProcessor  # updated import path
+from python.tracer import Tracer          # updated import path
+from python.processor import DeltaProcessor  # updated import path
 
 app = Flask(__name__)       # location of current module - to establish relative paths - app is the web server
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server

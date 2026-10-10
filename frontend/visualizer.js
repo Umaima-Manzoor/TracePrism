@@ -163,12 +163,18 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // build output section (only if program produced print() output)
+    // build output section (accumulates print output up to current step)
     let outputHTML = '';
-    const outputText = AppState.output || '';
-    if (outputText.length > 0) {
-        // escape HTML characters in output to prevent injection
-        const safeOutput = outputText
+    let accumulatedOutput = '';
+    for (let i = 0; i <= stepIndex; i++) {
+        const snap = AppState.snapshots[i];
+        if (snap && snap.step_output) {
+            accumulatedOutput += snap.step_output;
+        }
+    }
+
+    if (accumulatedOutput.length > 0) {
+        const safeOutput = accumulatedOutput
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');

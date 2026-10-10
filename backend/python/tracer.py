@@ -12,6 +12,8 @@ class Tracer:
         self.snapshots = []
         self._step_counter = 0
         self._call_stack = []
+        self._stdout_buffer = None       # reference to active stdout buffer
+        self._last_stdout_length = 0     # tracks how much output was captured before this step
 
     def _trace_callback(self, frame, event, arg):
         code_filename = frame.f_code.co_filename
@@ -41,6 +43,20 @@ class Tracer:
             'stack': self._get_stack_frames(frame),
             'return_value': None,
         }
+
+        # capture any new stdout produced since the previous snapshot
+        if self._stdout_buffer is not None:
+            current_length = self._stdout_buffer.tell()     # returns current position
+            if current_length > self._last_stdout_length:      # reads new chars only
+                self._stdout_buffer.seek(self._last_stdout_length)
+                new_output = self._stdout_buffer.read()
+                self._stdout_buffer.seek(current_length)  # restore pointer to end
+                snapshot['step_output'] = new_output
+                self._last_stdout_length = current_length
+            else:
+                snapshot['step_output'] = ''
+        else:
+            snapshot['step_output'] = ''
 
         if event == 'return':
             snapshot['return_value'] = self._make_serializable(arg)
@@ -141,8 +157,10 @@ class Tracer:
         }
 
         error_info = None
-        captured_output = io.StringIO()       # buffer to capture print() output
-        old_stdout = sys.stdout               # save the real stdout
+        captured_output = io.StringIO()
+        old_stdout = sys.stdout
+        self._stdout_buffer = captured_output     # share buffer with trace callback
+        self._last_stdout_length = 0              # reset counter
 
         try:
             sys.stdout = captured_output      # redirect all print() to our buffer
@@ -163,20 +181,39 @@ class Tracer:
         finally:
             sys.settrace(None)
             sys.stdout = old_stdout           # restore real stdout no matter what
+            self._stdout_buffer = None
 
         output_text = captured_output.getvalue().strip()
 
-        # filter out empty initial snapshots (no vars, no output, no function calls)
+                # filter out meaningless intermediate snapshots (empty module-level steps)
         filtered_snapshots = []
         for snap in self.snapshots:
             has_vars = len(snap['locals']) > 0
-            has_output = len(output_text) > 0
+            has_step_output = len(snap.get('step_output', '')) > 0
             has_depth = len(snap['stack']) > 1
             is_call_or_return = snap['event'] in ('call', 'return')
-            if has_vars or has_output or has_depth or is_call_or_return:
+            has_exception = 'exception' in snap
+            if has_vars or has_step_output or has_depth or is_call_or_return or has_exception:
                 filtered_snapshots.append(snap)
 
-        # re-number steps after filtering
+        # trim trailing empty steps (module-level returns with no state change)
+        while filtered_snapshots:
+            last = filtered_snapshots[-1]
+            is_trailing_empty = (
+                last['event'] == 'return'
+                and len(last['stack']) <= 1
+                and not last.get('step_output')
+                and 'exception' not in last
+            )
+            # keep the last meaningful step even if it's a return
+            if is_trailing_empty and len(filtered_snapshots) > 1:
+                prev = filtered_snapshots[-2]
+                if prev['locals'] == last['locals']:
+                    filtered_snapshots.pop()
+                    continue
+            break
+
+        # re-number steps after all filtering
         for i, snap in enumerate(filtered_snapshots):
             snap['step'] = i
 
