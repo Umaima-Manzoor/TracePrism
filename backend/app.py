@@ -1,6 +1,6 @@
 import os
-import hashlib          # for hash in cache
-from flask import Flask, request, jsonify, send_from_directory
+import hashlib
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -10,48 +10,26 @@ try:
     from backend.python.tracer import Tracer
     from backend.python.processor import DeltaProcessor
 except ImportError:
-    try:
-        from python.tracer import Tracer
-        from python.processor import DeltaProcessor
-    except ImportError:
-        from tracer import Tracer
-        from processor import DeltaProcessor
+    from python.tracer import Tracer
+    from python.processor import DeltaProcessor
 
-# Resolve absolute path to the frontend directory
-FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
-
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
-CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 limiter = Limiter(
-    key_func=get_remote_address,        # each IP gets its own request counter
+    key_func=get_remote_address,
     app=app,
     default_limits=["100 per minute"],
-    storage_uri="memory://"             # storing counters in RAM
+    storage_uri="memory://"
 )
 
 tracer = Tracer()
 processor = DeltaProcessor(keyframe_interval=100)
 CACHE = {}
 
-# ── FRONTEND STATIC ROUTES ──────────────────────────────────────────────────
-
-@app.route('/')
-def serve_index():
-    # Serves frontend/index.html when user visits the homepage
-    return send_from_directory(FRONTEND_DIR, 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    # Serves style.css, app.js, visualizer.js, controls.js
-    if os.path.exists(os.path.join(FRONTEND_DIR, path)):
-        return send_from_directory(FRONTEND_DIR, path)
-    return jsonify({'error': 'Not found'}), 404
-
-# ── API ENDPOINTS ───────────────────────────────────────────────────────────
 
 @app.route('/health', methods=['GET'])
-@limiter.exempt                         # to exclude the pinging from using the user's quota
+@limiter.exempt
 def health_check():
     return jsonify({
         'status': 'healthy',
@@ -60,18 +38,18 @@ def health_check():
 
 
 @app.route('/api/trace', methods=['POST'])
-@limiter.limit("30 per minute")         # tracing code takes up CPU, so reducing the limit to 30 traces/min per user IP
+@limiter.limit("30 per minute")
 def trace_code():
-    data = request.get_json()       # json body to py dict
+    data = request.get_json()
 
-    if not data or 'code' not in data:      # frontend sent the request in the wrong format
+    if not data or 'code' not in data:
         return jsonify({
             'error': True,
             'message': 'Missing "code" in request body.'
         }), 400
 
     source_code = data.get('code', '')
-    language = data.get('language', 'python')       # for future expansion for other languages
+    language = data.get('language', 'python')
 
     if language != 'python':
         return jsonify({
@@ -87,7 +65,7 @@ def trace_code():
             'output': ''
         }), 200
 
-    code_hash = hashlib.sha256(source_code.encode('utf-8')).hexdigest()     # converts text to bytes -> creates 64-char key
+    code_hash = hashlib.sha256(source_code.encode('utf-8')).hexdigest()
 
     if code_hash in CACHE:
         return jsonify(CACHE[code_hash]), 200
@@ -95,7 +73,7 @@ def trace_code():
     raw_result = tracer.trace(source_code)
 
     if raw_result.get('error') and raw_result.get('error_type') == 'SyntaxError':
-        return jsonify(raw_result), 200     # so ui can highlight the error
+        return jsonify(raw_result), 200
 
     compressed_snapshots = processor.process(raw_result['snapshots'])
 
