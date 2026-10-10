@@ -1,30 +1,35 @@
 :root {
     /* Background Palette (Midnight Silk) */
-    --bg-app: #0e0f12;                  /* Deep midnight blue-black */
-    --bg-pane: #16181e;                 /* Dark silk panel */
+    --bg-app: #0e0f12;
+    --bg-pane: #16181e;
     --bg-pane-header: #1e2028;
     --bg-element: #282a34;
     --bg-element-hover: #343744;
 
     /* Text Palette */
-    --text-main: #ede8df;               /* Champagne cream */
+    --text-main: #ede8df;
     --text-muted: #96908a;
     --text-dim: #585450;
 
-    /* Brand & Accent Colors */
-    --accent-lime: #ffd7a8;             /* Soft Peach / Apricot */
-    --accent-lime-dim: #e6b88e;         /* Muted Peach for hovers */
-    --accent-cyan: #8aa8a0;             /* Muted celadon */
-    --accent-coral: #c07a72;            /* Muted clay */
+    /* High-contrast text for use on light peach background */
+    --text-on-peach: #2a1f14;              /* Deep espresso brown */
+    --text-on-peach-muted: #5c4a38;        /* Medium brown */
+    --text-on-peach-dim: #8a7560;          /* Soft warm gray */
 
-    /* Data Type Colors (High-Contrast for Peach BG) */
-    --type-int: #c47a20;                /* Rich amber */
-    --type-float: #2888b0;              /* Cerulean blue */
-    --type-str: #2e8b47;                /* Emerald green */
-    --type-bool: #cc3344;               /* Crimson red */
-    --type-list: #4a5aaa;               /* Deep indigo */
-    --type-dict: #8844aa;               /* Violet */
-    --type-none: #777777;               /* Neutral gray */
+    /* Brand & Accent Colors */
+    --accent-lime: #ffd7a8;                /* Soft Peach / Apricot */
+    --accent-lime-dim: #e6b88e;            /* Muted Peach for hovers */
+    --accent-cyan: #8aa8a0;                /* Muted celadon */
+    --accent-coral: #c07a72;               /* Muted clay */
+
+    /* Data Type Colors (readable on both dark and peach) */
+    --type-int: #a85a0f;                   /* Deep burnt amber */
+    --type-float: #1e6a90;                 /* Deep cerulean */
+    --type-str: #1f6b35;                   /* Deep emerald */
+    --type-bool: #a62230;                  /* Deep crimson */
+    --type-list: #3a4a99;                  /* Deep indigo */
+    --type-dict: #6b2d8f;                  /* Deep violet */
+    --type-none: #5a5a5a;                  /* Neutral dark gray */
 
     /* Typography */
     --font-ui: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -58,7 +63,7 @@ html, body {
     width: 100%;
     height: 100%;
     max-width: 100%;
-    overflow: hidden;       /* App acts like a desktop software window */
+    overflow: hidden;
     background-color: var(--bg-app);
     color: var(--text-main);
     font-family: var(--font-ui);
@@ -70,7 +75,7 @@ html, body {
 /* master app layout (css grid) */
 .app-layout {
     display: grid;
-    grid-template-rows: 48px 1fr 56px;      /* Rows: Topbar, Workspace, Playback Deck */
+    grid-template-rows: 48px 1fr 56px;
     width: 100%;
     max-width: 100%;
     height: 100vh;
@@ -116,21 +121,20 @@ html, body {
 /* main workspace (2 cols with responsive min-width locks) */
 .workspace {
     display: grid;
-    grid-template-columns: 1fr 1fr;         /* 50% Editor, 50% Unified Canvas */
-    gap: 1px;                               /* 1px gutter acts as border between panes */
-    background-color: var(--border-color);  /* gutter color */
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background-color: var(--border-color);
     height: 100%;
     overflow: hidden;
 }
 
-/* shared pane styling (min-width: 0 prevents column breakout scrollbars) */
 .editor-pane,
 .canvas-pane {
     display: flex;
     flex-direction: column;
     background-color: var(--bg-app);
     overflow: hidden;
-    min-width: 0;                           /* Crucial responsive grid fix! */
+    min-width: 0;
     transition: background-color var(--transition-normal);
 }
 
@@ -211,27 +215,26 @@ html, body {
     z-index: 2;
 }
 
-/* Gliding Active Line Highlight (Combined Solid Ruler & Left Gutter Bracket) */
 .line-highlight {
     position: absolute;
-    left: 48px;             /* Aligns perfectly past the 48px line numbers gutter */
+    left: 48px;
     right: 0;
-    top: 14px;              /* Starts at line 1 */
+    top: 14px;
     height: var(--line-height-code);
-    background-color: var(--bg-element); /* Solid warm-indigo-gray runway */
-    border-left: 4px solid var(--accent-lime); /* Thick, solid Soft Peach left bracket */
-    pointer-events: none;   /* Allows clicking/selecting text through the highlight */
+    background-color: var(--bg-element);
+    border-left: 4px solid var(--accent-lime);
+    pointer-events: none;
     transition: top var(--transition-fast);
-    z-index: 1;             /* Sits behind text (z-index: 2) but above background */
-    display: none;          /* Controlled by JS */
+    z-index: 1;
+    display: none;
 }
 
-/* unified execution canvas */
+/* unified execution canvas (sections stacked vertically) */
 .viz-canvas {
     position: relative;
     display: flex;
-    flex-direction: row;                    /* Flex columns inside canvas: Stack Left, Vars Right */
-    gap: 28px;                              /* Clean gap between stack and other visuals */
+    flex-direction: column;                /* STACK TOP-TO-BOTTOM, vars first */
+    gap: 24px;
     align-items: start;
     flex: 1;
     overflow-y: auto;
@@ -239,22 +242,57 @@ html, body {
     background-color: transparent;
 }
 
-/* Active trace state: entire canvas pane shifts to Soft Peach background */
 .canvas-pane.canvas-active {
     background-color: var(--accent-lime);
 }
 
-/* Adjust colors inside active light-peach canvas so contrast is perfect */
+/* High-contrast overrides on light peach canvas */
 .canvas-pane.canvas-active .viz-section-label {
-    color: var(--bg-pane-header); /* dark grey label for clear readability on light background */
+    color: var(--text-on-peach-muted);
+}
+
+.canvas-pane.canvas-active .var-name {
+    color: var(--text-on-peach);
+}
+
+.canvas-pane.canvas-active .var-colon,
+.canvas-pane.canvas-active .var-equals {
+    color: var(--text-on-peach-dim);
+}
+
+.canvas-pane.canvas-active .var-type {
+    color: var(--text-on-peach-muted);
+}
+
+.canvas-pane.canvas-active .frame-func {
+    color: var(--text-on-peach);
 }
 
 .canvas-pane.canvas-active .placeholder-title {
-    color: var(--bg-pane);
+    color: var(--text-on-peach);
 }
 
 .canvas-pane.canvas-active .placeholder-sub {
-    color: var(--border-strong);
+    color: var(--text-on-peach-muted);
+}
+
+.canvas-pane.canvas-active .stack-frames {
+    border-color: var(--text-on-peach-dim);
+}
+
+.canvas-pane.canvas-active .stack-frame {
+    background-color: rgba(255, 255, 255, 0.4);
+    border-bottom-color: var(--text-on-peach-dim);
+}
+
+.canvas-pane.canvas-active .stack-frame.active-frame {
+    background-color: rgba(255, 255, 255, 0.7);
+}
+
+.canvas-pane.canvas-active .output-block {
+    background-color: rgba(42, 31, 20, 0.08);
+    border-color: var(--text-on-peach-dim);
+    color: var(--text-on-peach);
 }
 
 .canvas-placeholder {
@@ -282,15 +320,12 @@ html, body {
     max-width: 320px;
 }
 
-/* canvas renderers (all live inside #viz-canvas) */
+/* canvas renderers */
 .viz-section {
     display: flex;
     flex-direction: column;
     align-items: start;
-}
-
-.viz-section.section-fill {
-    flex: 1;                                /* Right column takes remaining canvas width */
+    width: 100%;
 }
 
 .viz-section-label {
@@ -305,7 +340,7 @@ html, body {
     transition: color var(--transition-normal);
 }
 
-/* ── VARIABLE INLINE ROWS (NO CARDS / ANTI-SLOP) ───────────────────────── */
+/* ── INLINE VARIABLE ROWS (NO CARDS) ───────────────────────────────────── */
 .var-rows {
     display: flex;
     flex-direction: column;
@@ -320,17 +355,20 @@ html, body {
     font-family: var(--font-code);
     font-size: 13px;
     line-height: 20px;
+    max-width: 100%;
     transition: color var(--transition-normal);
 }
 
 .var-name {
     font-weight: 600;
     color: var(--text-main);
+    flex-shrink: 0;
 }
 
 .var-colon {
     color: var(--text-dim);
     margin: 0 4px;
+    flex-shrink: 0;
 }
 
 .var-type {
@@ -339,15 +377,31 @@ html, body {
     color: var(--text-muted);
     margin-right: 8px;
     letter-spacing: 0.5px;
+    flex-shrink: 0;
 }
 
 .var-equals {
     color: var(--text-dim);
     margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .var-value {
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+    cursor: pointer;
+}
+
+/* Expanded state: click to see full value */
+.var-value.expanded {
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 150px;
+    overflow-y: auto;
 }
 
 /* Type Specific Text Colors */
@@ -361,7 +415,7 @@ html, body {
 
 /* Compact Text Flash on Variable Change */
 @keyframes textGlowFlash {
-    0% { color: var(--accent-lime); font-weight: 700; }
+    0% { color: var(--text-on-peach); font-weight: 700; }
     100% { font-weight: 500; }
 }
 
@@ -369,7 +423,7 @@ html, body {
     animation: textGlowFlash 800ms var(--ease-out-soft);
 }
 
-/* program output section */
+/* program output section with truncation */
 .output-block {
     background-color: var(--bg-pane);
     border: 1px solid var(--border-color);
@@ -379,7 +433,8 @@ html, body {
     font-size: 13px;
     color: var(--text-main);
     width: 100%;
-    margin-bottom: 20px;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .output-block pre {
@@ -388,55 +443,74 @@ html, body {
     word-break: break-word;
 }
 
-/* ── CALL STACK COLUMN-GROWING-DOWN  */
+/* ── CALL STACK (GROWS UPWARD, NEW FRAMES ON TOP) ─────────────────────── */
 .stack-wrapper {
     position: relative;
     display: flex;
-    flex-direction: row;                    /* Arrow track and frame column side-by-side */
-    gap: 12px;
+    flex-direction: row;
+    gap: 10px;
+    align-items: flex-start;
 }
 
 .stack-arrow-track {
     position: relative;
-    width: 32px;                            /* Width of the sliding pointer channel */
+    width: 24px;
+    flex-shrink: 0;
+    align-self: stretch;
 }
 
-/* Bolder sliding arrow outside the stack */
+/* External sliding arrow (bold, visible) */
 .stack-arrow {
     position: absolute;
     left: 0;
-    top: 6px;                               /* Centered with first row */
+    top: 6px;
     font-family: var(--font-code);
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent-lime);              /* Soft Peach */
-    transition: transform var(--transition-smooth); /* Smooth spring slide up/down! */
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--accent-coral);              /* Coral for strong visibility */
+    line-height: 20px;
+    transition: transform var(--transition-smooth);
+    text-shadow: 0 0 4px rgba(192, 122, 114, 0.3);
 }
 
-/* Flush-Borders Stack Column */
+/* Light peach canvas: arrow uses deep brown */
+.canvas-pane.canvas-active .stack-arrow {
+    color: #8b2a1f;                          /* Deep brick red */
+    text-shadow: none;
+}
+
+/* Flush-Borders Stack Column (column-reverse: new frames push on TOP) */
 .stack-frames {
     display: flex;
-    flex-direction: column;                 /* Normal order (index 0 module at top, grows downwards!) */
-    width: fit-content;                     /* Only as wide as the longest frame name */
+    flex-direction: column-reverse;         /* NEW FRAMES APPEAR ON TOP */
+    width: fit-content;
+    max-width: 400px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    overflow: hidden;                       /* Locks borders cleanly */
+    overflow: hidden;
 }
 
 .stack-frame {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 32px;                           /* Fixed height makes arrow math O(1) */
+    justify-content: flex-start;
+    height: 32px;
     padding: 0 16px;
     background-color: var(--bg-pane);
     border-bottom: 1px solid var(--border-color);
     font-family: var(--font-code);
     font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
+    max-width: 400px;
 }
 
-.stack-frame:last-child {
-    border-bottom: none;                    /* No bottom border on the last flush row */
+/* With column-reverse, last-child is visually the TOP frame */
+/* But logically, the FIRST frame (index 0 = main) is at the bottom */
+.stack-frame:first-child {
+    border-bottom: none;
 }
 
 .stack-frame.active-frame {
@@ -445,13 +519,14 @@ html, body {
     font-weight: 600;
 }
 
-/* Only genuinely new stack frames get the push animation */
 .stack-frame.frame-new {
     animation: framePush 320ms var(--ease-spring) forwards;
 }
 
 .frame-func {
     color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -498,7 +573,6 @@ html, body {
     gap: 4px;
 }
 
-/* Keyboard shortcut hint */
 .kbd-hint {
     font-size: 14px;
     color: var(--text-dim);
@@ -513,7 +587,6 @@ html, body {
     color: var(--text-muted);
 }
 
-/* Button Base Styles */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -543,7 +616,6 @@ html, body {
     background-color: var(--accent-lime-dim);
 }
 
-/* Playback Deck Buttons */
 .btn-deck {
     display: inline-flex;
     align-items: center;
@@ -581,7 +653,6 @@ html, body {
     color: var(--bg-app);
 }
 
-/* Timeline Scrubber Slider */
 .scrubber-container {
     flex: 1;
     display: flex;
@@ -623,7 +694,6 @@ html, body {
     cursor: pointer;
 }
 
-/* Deck Meta (step counter and speed dropdown) */
 .deck-meta {
     display: flex;
     align-items: center;
@@ -638,33 +708,29 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-/* Speed Dropdown with Dynamic Arrow Flip */
 .speed-dropdown {
     -webkit-appearance: none;
     -moz-appearance: none;
-    appearance: none;                   /* Removes default OS arrow */
+    appearance: none;
     background-color: var(--bg-element);
     border: 1px solid var(--border-color);
     color: var(--text-main);
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 500;
-    padding: 6px 32px 6px 10px;        /* 32px right padding leaves space for larger chevron */
+    padding: 6px 32px 6px 10px;
     border-radius: var(--radius-sm);
     outline: none;
     cursor: pointer;
     letter-spacing: 0.5px;
-    
-    /* Bolder, Wider Downward Chevron (⌄) in palette stone color */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2396908a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 9 12 17 20 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-/* Windows / Edge specific override to prevent double-arrow visual bug */
 .speed-dropdown::-ms-expand {
-    display: none;                      /* Hides default Windows arrow completely */
+    display: none;
 }
 
 .speed-dropdown:hover {
@@ -672,39 +738,45 @@ html, body {
     background-color: var(--bg-element-hover);
 }
 
-/* On Click / Focus: Bolder, Wider Upward Chevron (^) in Soft Peach */
 .speed-dropdown:focus {
     border-color: var(--accent-lime);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ffd7a8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 15 12 7 4 15'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-/* custom scrollbar (webkit) */
 .viz-canvas::-webkit-scrollbar,
-.code-editor::-webkit-scrollbar {
+.code-editor::-webkit-scrollbar,
+.output-block::-webkit-scrollbar,
+.var-value::-webkit-scrollbar {
     width: 10px;
     height: 10px;
 }
 
 .viz-canvas::-webkit-scrollbar-track,
-.code-editor::-webkit-scrollbar-track {
+.code-editor::-webkit-scrollbar-track,
+.output-block::-webkit-scrollbar-track,
+.var-value::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .viz-canvas::-webkit-scrollbar-thumb,
-.code-editor::-webkit-scrollbar-thumb {
+.code-editor::-webkit-scrollbar-thumb,
+.output-block::-webkit-scrollbar-thumb,
+.var-value::-webkit-scrollbar-thumb {
     background: var(--bg-element);
     border-radius: 5px;
 }
 
 .viz-canvas::-webkit-scrollbar-thumb:hover,
-.code-editor::-webkit-scrollbar-thumb:hover {
+.code-editor::-webkit-scrollbar-thumb:hover,
+.output-block::-webkit-scrollbar-thumb:hover,
+.var-value::-webkit-scrollbar-thumb:hover {
     background: var(--bg-element-hover);
 }
 
 /* responsive media queries */
 @media (max-width: 900px) {
     body {
-        overflow: auto;         /* Allow scrolling on smaller vertical viewports */
+        overflow: auto;
     }
 
     .app-layout {
@@ -714,7 +786,7 @@ html, body {
     }
 
     .workspace {
-        grid-template-columns: 1fr; /* Stack panes into a single column */
+        grid-template-columns: 1fr;
         grid-template-rows: auto auto;
         height: auto;
     }
@@ -725,7 +797,6 @@ html, body {
 
     .viz-canvas {
         min-height: 400px;
-        flex-direction: column;    /* Stack vertical on small width panels */
     }
 
     .playback-deck {

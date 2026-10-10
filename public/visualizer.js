@@ -82,60 +82,13 @@ function renderStep(stepIndex) {
 
     highlightLine(snapshot.line);
 
-    // updating headers and slider
     DOM.stepIndicator.innerText = `STEP ${stepIndex + 1} / ${AppState.totalSteps}`;
     DOM.stepCounter.innerText = `${stepIndex + 1} / ${AppState.totalSteps}`;
     DOM.timelineSlider.value = stepIndex;
 
     DOM.vizCanvas.parentElement.classList.add('canvas-active');
 
-    // 1. GENERATE CALL STACK SECTION (growing down on the left)
-    let stackHTML = '';
-    const stack = snapshot.stack || [];
-    const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
-
-    if (stack.length > 1) {
-        const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
-        let framesHTML = '';
-        
-        for (let i = 0; i < stack.length; i++) {
-            const frame = stack[i];
-            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
-            const isActive = (i === stack.length - 1);
-            const activeClass = isActive ? ' active-frame' : '';
-
-            // Only animate genuinely new stack frames (prevents blinking)
-            const isNewFrame = !prevLabels.has(funcName);
-            const animClass = isNewFrame ? ' frame-new' : '';
-
-            framesHTML += `
-                <div class="stack-frame${activeClass}${animClass}">
-                    <span class="frame-func">${funcName}</span>
-                </div>
-            `;
-        }
-
-        // Active frame is always the last element index (i = stack.length - 1)
-        // Each frame has a fixed height of 32px (defined in CSS)
-        // We multiply the index by 32 to calculate the absolute Y offset for the arrow!
-        const arrowOffset = (stack.length - 1) * 32;
-
-        stackHTML = `
-            <div class="viz-section">
-                <div class="viz-section-label">Call Stack</div>
-                <div class="stack-wrapper">
-                    <div class="stack-arrow-track">
-                        <div id="stack-arrow" class="stack-arrow" style="transform: translateY(${arrowOffset}px);">━━▶</div>
-                    </div>
-                    <div class="stack-frames">
-                        ${framesHTML}
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // 2. GENERATE VARIABLES INLINE SECTION (flat REPL text lines)
+    // 1. BUILD VARIABLES SECTION (inline rows, truncation on long values)
     let varsHTML = '';
     const currentLocals = AppState.reconstructedLocals[stepIndex] || {};
     const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};
@@ -152,13 +105,19 @@ function renderStep(stepIndex) {
             const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);
             const changeClass = (isNew || isChanged) ? ' chip-changed' : '';
 
+            // Escape HTML in value to prevent injection
+            const safeValue = formattedValue
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
             rowsHTML += `
                 <div class="var-row${changeClass}" data-type="${type}">
                     <span class="var-name">${name}</span>
                     <span class="var-colon">:</span>
                     <span class="var-type">${type}</span>
                     <span class="var-equals">=</span>
-                    <span class="var-value">${formattedValue}</span>
+                    <span class="var-value" title="Click to expand/collapse">${safeValue}</span>
                 </div>
             `;
         }
@@ -172,7 +131,60 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // 3. GENERATE PROGRAM OUTPUT SECTION
+    // 2. BUILD CALL STACK SECTION (grows upward, new frames on top)
+    let stackHTML = '';
+    const stack = snapshot.stack || [];
+    const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
+
+    if (stack.length > 1) {
+        const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
+        let framesHTML = '';
+
+        // Render in natural order (index 0 = main, last = active)
+        // CSS column-reverse will visually flip so last (active) appears at TOP
+        for (let i = 0; i < stack.length; i++) {
+            const frame = stack[i];
+            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
+            const isActive = (i === stack.length - 1);
+            const activeClass = isActive ? ' active-frame' : '';
+
+            const isNewFrame = !prevLabels.has(funcName);
+            const animClass = isNewFrame ? ' frame-new' : '';
+
+            // Escape HTML in function name
+            const safeFuncName = funcName
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            framesHTML += `
+                <div class="stack-frame${activeClass}${animClass}" title="${safeFuncName}">
+                    <span class="frame-func">${safeFuncName}</span>
+                </div>
+            `;
+        }
+
+        // Arrow position: since column-reverse flips the order, the active frame
+        // (last in array) is visually at the TOP (position 0 from top)
+        // So the arrow stays at position 0 pointing to the top frame
+        const arrowOffset = 0;
+
+        stackHTML = `
+            <div class="viz-section">
+                <div class="viz-section-label">Call Stack</div>
+                <div class="stack-wrapper">
+                    <div class="stack-arrow-track">
+                        <div id="stack-arrow" class="stack-arrow" style="transform: translateY(${arrowOffset}px);">▶</div>
+                    </div>
+                    <div class="stack-frames">
+                        ${framesHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 3. BUILD PROGRAM OUTPUT SECTION (accumulated up to current step)
     let outputHTML = '';
     let accumulatedOutput = '';
     for (let i = 0; i <= stepIndex; i++) {
@@ -188,26 +200,33 @@ function renderStep(stepIndex) {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         outputHTML = `
-            <div class="viz-section" style="width: 100%;">
+            <div class="viz-section">
                 <div class="viz-section-label">Output</div>
                 <div class="output-block"><pre>${safeOutput}</pre></div>
             </div>
         `;
     }
 
-    // 4. GENERATE RUNTIME EXCEPTION SECTION
+    // 4. BUILD EXCEPTION SECTION
     let errorHTML = '';
     if (snapshot.exception) {
+        const safeType = snapshot.exception.type
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeMsg = snapshot.exception.message
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         errorHTML = `
-            <div class="var-row" data-type="bool" style="margin-top: 10px;">
-                <span class="var-name" style="color: var(--accent-coral); font-weight: 700;">${snapshot.exception.type}</span>
-                <span class="var-colon">:</span>
-                <span class="var-value" style="color: var(--text-main);">${snapshot.exception.message}</span>
+            <div class="viz-section">
+                <div class="viz-section-label" style="color: var(--accent-coral);">Exception Raised</div>
+                <div class="var-row" data-type="bool">
+                    <span class="var-name" style="color: var(--accent-coral); font-weight: 700;">${safeType}</span>
+                    <span class="var-colon">:</span>
+                    <span class="var-value" style="color: var(--text-main);">${safeMsg}</span>
+                </div>
             </div>
         `;
     }
 
-    // 5. UPDATE SYSTEM STATUS MODE HEADER
+    // 5. UPDATE STATUS MODE TAG
     if (snapshot.exception) {
         DOM.vizMode.innerText = 'EXCEPTION';
     } else if (varsHTML && stackHTML) {
@@ -222,24 +241,14 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
-    // 6. INJECT EVERYTHING INTO THE UNIFIED CANVAS
-    // If we have both stack and other assets, we split them side-by-side using Flex
-    if (stackHTML) {
-        DOM.vizCanvas.innerHTML = `
-            ${stackHTML}
-            <div class="viz-section section-fill">
-                ${errorHTML}
-                ${outputHTML}
-                ${varsHTML}
-            </div>
-        `;
-    } else {
-        DOM.vizCanvas.innerHTML = `
-            <div class="viz-section section-fill">
-                ${errorHTML}
-                ${outputHTML}
-                ${varsHTML}
-            </div>
-        `;
-    }
+    // 6. INJECT INTO CANVAS: VARIABLES FIRST, THEN STACK, THEN OUTPUT, THEN ERROR
+    DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorHTML;
+
+    // 7. ATTACH CLICK HANDLERS FOR VALUE EXPAND/COLLAPSE
+    const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
+    valueElements.forEach(el => {
+        el.addEventListener('click', () => {
+            el.classList.toggle('expanded');
+        });
+    });
 }
