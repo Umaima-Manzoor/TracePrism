@@ -17,8 +17,8 @@
     --accent-cyan: #8aa8a0;             /* Muted celadon */
     --accent-coral: #c07a72;            /* Muted clay */
 
-    /* Data Type Colors (readable on both dark and peach backgrounds) */
-    --type-int: #c47a20;                /* Rich amber - dark enough for peach bg */
+    /* Data Type Colors (High-Contrast for Peach BG) */
+    --type-int: #c47a20;                /* Rich amber */
     --type-float: #2888b0;              /* Cerulean blue */
     --type-str: #2e8b47;                /* Emerald green */
     --type-bool: #cc3344;               /* Crimson red */
@@ -57,6 +57,7 @@
 html, body {
     width: 100%;
     height: 100%;
+    max-width: 100%;
     overflow: hidden;       /* App acts like a desktop software window */
     background-color: var(--bg-app);
     color: var(--text-main);
@@ -70,7 +71,8 @@ html, body {
 .app-layout {
     display: grid;
     grid-template-rows: 48px 1fr 56px;      /* Rows: Topbar, Workspace, Playback Deck */
-    width: 100vw;
+    width: 100%;
+    max-width: 100%;
     height: 100vh;
 }
 
@@ -111,7 +113,7 @@ html, body {
     letter-spacing: 0.3px;
 }
 
-/* main workspace (2 cols) */
+/* main workspace (2 cols with responsive min-width locks) */
 .workspace {
     display: grid;
     grid-template-columns: 1fr 1fr;         /* 50% Editor, 50% Unified Canvas */
@@ -121,13 +123,14 @@ html, body {
     overflow: hidden;
 }
 
-/* shared pane styling */
+/* shared pane styling (min-width: 0 prevents column breakout scrollbars) */
 .editor-pane,
 .canvas-pane {
     display: flex;
     flex-direction: column;
     background-color: var(--bg-app);
     overflow: hidden;
+    min-width: 0;                           /* Crucial responsive grid fix! */
     transition: background-color var(--transition-normal);
 }
 
@@ -215,8 +218,8 @@ html, body {
     right: 0;
     top: 14px;              /* Starts at line 1 */
     height: var(--line-height-code);
-    background-color: var(--bg-element); /* Solid warm-indigo-gray runway (Concept 1) */
-    border-left: 4px solid var(--accent-lime); /* Thick, solid Soft Peach left bracket (Concept 3) */
+    background-color: var(--bg-element); /* Solid warm-indigo-gray runway */
+    border-left: 4px solid var(--accent-lime); /* Thick, solid Soft Peach left bracket */
     pointer-events: none;   /* Allows clicking/selecting text through the highlight */
     transition: top var(--transition-fast);
     z-index: 1;             /* Sits behind text (z-index: 2) but above background */
@@ -226,10 +229,14 @@ html, body {
 /* unified execution canvas */
 .viz-canvas {
     position: relative;
+    display: flex;
+    flex-direction: row;                    /* Flex columns inside canvas: Stack Left, Vars Right */
+    gap: 28px;                              /* Clean gap between stack and other visuals */
+    align-items: start;
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    background-color: transparent; /* inherits from parent pane background */
+    background-color: transparent;
 }
 
 /* Active trace state: entire canvas pane shifts to Soft Peach background */
@@ -255,6 +262,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
     height: 100%;
     gap: 8px;
     text-align: center;
@@ -274,13 +282,15 @@ html, body {
     max-width: 320px;
 }
 
-/* canvas renderers (variable chips, stack frames, etc all live inside #viz-canvas) */
+/* canvas renderers (all live inside #viz-canvas) */
 .viz-section {
-    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
 }
 
-.viz-section:last-child {
-    margin-bottom: 0;
+.viz-section.section-fill {
+    flex: 1;                                /* Right column takes remaining canvas width */
 }
 
 .viz-section-label {
@@ -290,94 +300,76 @@ html, body {
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     padding-left: 2px;
     transition: color var(--transition-normal);
 }
 
-/* variable chips (replaces var-card) */
-.var-chips {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px;
-}
-
-.var-chip {
+/* ── VARIABLE INLINE ROWS (NO CARDS / ANTI-SLOP) ───────────────────────── */
+.var-rows {
     display: flex;
     flex-direction: column;
-    background-color: var(--bg-pane);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    font-family: var(--font-code);
-    transition: border-color var(--transition-normal), background-color var(--transition-normal);
+    gap: 6px;
+    width: 100%;
+    padding-left: 2px;
 }
 
-.var-chip-head {
+.var-row {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 4px;
-    gap: 8px;
+    font-family: var(--font-code);
+    font-size: 13px;
+    line-height: 20px;
+    transition: color var(--transition-normal);
 }
 
-.var-chip-name {
+.var-name {
     font-weight: 600;
     color: var(--text-main);
-    font-size: 13px;
 }
 
-.var-chip-type {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.var-colon {
     color: var(--text-dim);
+    margin: 0 4px;
 }
 
-.var-chip-value {
-    font-size: 14px;
+.var-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-right: 8px;
+    letter-spacing: 0.5px;
+}
+
+.var-equals {
+    color: var(--text-dim);
+    margin-right: 8px;
+}
+
+.var-value {
     font-weight: 500;
-    word-break: break-all;
 }
 
 /* Type Specific Text Colors */
-.var-chip[data-type="int"] .var-chip-value,
-.var-chip[data-type="int"] .var-chip-type { color: var(--type-int); }
+.var-row[data-type="int"] .var-value { color: var(--type-int); }
+.var-row[data-type="float"] .var-value { color: var(--type-float); }
+.var-row[data-type="str"] .var-value { color: var(--type-str); }
+.var-row[data-type="bool"] .var-value { color: var(--type-bool); }
+.var-row[data-type="list"] .var-value { color: var(--type-list); }
+.var-row[data-type="dict"] .var-value { color: var(--type-dict); }
+.var-row[data-type="NoneType"] .var-value { color: var(--type-none); }
 
-.var-chip[data-type="float"] .var-chip-value,
-.var-chip[data-type="float"] .var-chip-type { color: var(--type-float); }
-
-.var-chip[data-type="str"] .var-chip-value,
-.var-chip[data-type="str"] .var-chip-type { color: var(--type-str); }
-
-.var-chip[data-type="bool"] .var-chip-value,
-.var-chip[data-type="bool"] .var-chip-type { color: var(--type-bool); }
-
-.var-chip[data-type="list"] .var-chip-value,
-.var-chip[data-type="list"] .var-chip-type { color: var(--type-list); }
-
-.var-chip[data-type="dict"] .var-chip-value,
-.var-chip[data-type="dict"] .var-chip-type { color: var(--type-dict); }
-
-.var-chip[data-type="NoneType"] .var-chip-value { color: var(--type-none); }
-
-/* Changed Variable Glow Keyframe Animation (Soft Peach Flash) */
-@keyframes chipFlash {
-    0% {
-        border-color: var(--accent-lime);
-        background-color: rgba(255, 215, 168, 0.15); /* Translucent Soft Peach */
-    }
-    100% {
-        border-color: var(--border-color);
-        background-color: var(--bg-pane);
-    }
+/* Compact Text Flash on Variable Change */
+@keyframes textGlowFlash {
+    0% { color: var(--accent-lime); font-weight: 700; }
+    100% { font-weight: 500; }
 }
 
-.var-chip.chip-changed {
-    animation: chipFlash 700ms var(--ease-out-soft);
+.var-row.chip-changed .var-value {
+    animation: textGlowFlash 800ms var(--ease-out-soft);
 }
 
-/* program output section (print statements) */
+/* program output section */
 .output-block {
     background-color: var(--bg-pane);
     border: 1px solid var(--border-color);
@@ -386,32 +378,71 @@ html, body {
     font-family: var(--font-code);
     font-size: 13px;
     color: var(--text-main);
-    overflow-x: auto;
+    width: 100%;
+    margin-bottom: 20px;
 }
 
 .output-block pre {
     margin: 0;
-    white-space: pre-wrap;      /* wrap long lines */
+    white-space: pre-wrap;
     word-break: break-word;
 }
 
-/* call stack frames (also inside unified canvas) */
+/* ── CALL STACK COLUMN-GROWING-DOWN  */
+.stack-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: row;                    /* Arrow track and frame column side-by-side */
+    gap: 12px;
+}
+
+.stack-arrow-track {
+    position: relative;
+    width: 32px;                            /* Width of the sliding pointer channel */
+}
+
+/* Bolder sliding arrow outside the stack */
+.stack-arrow {
+    position: absolute;
+    left: 0;
+    top: 6px;                               /* Centered with first row */
+    font-family: var(--font-code);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-lime);              /* Soft Peach */
+    transition: transform var(--transition-smooth); /* Smooth spring slide up/down! */
+}
+
+/* Flush-Borders Stack Column */
 .stack-frames {
     display: flex;
-    flex-direction: column-reverse;         /* New frames appear on top visually */
-    gap: 6px;
+    flex-direction: column;                 /* Normal order (index 0 module at top, grows downwards!) */
+    width: fit-content;                     /* Only as wide as the longest frame name */
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;                       /* Locks borders cleanly */
 }
 
 .stack-frame {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    height: 32px;                           /* Fixed height makes arrow math O(1) */
+    padding: 0 16px;
     background-color: var(--bg-pane);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    border-bottom: 1px solid var(--border-color);
     font-family: var(--font-code);
     font-size: 13px;
+}
+
+.stack-frame:last-child {
+    border-bottom: none;                    /* No bottom border on the last flush row */
+}
+
+.stack-frame.active-frame {
+    background-color: var(--bg-element);
+    color: var(--text-main);
+    font-weight: 600;
 }
 
 /* Only genuinely new stack frames get the push animation */
@@ -419,46 +450,30 @@ html, body {
     animation: framePush 320ms var(--ease-spring) forwards;
 }
 
-.stack-frame.active-frame {
-    border-color: var(--accent-cyan);
-    background-color: var(--bg-element);  /* Solid dark gray background to maintain high readability */
-}
-
 .frame-func {
-    font-weight: 600;
     color: var(--text-main);
-}
-
-.frame-func .frame-arrow {
-    color: var(--accent-cyan);
-    margin-right: 6px;
-}
-
-.frame-line {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 400;
+    white-space: nowrap;
 }
 
 @keyframes framePush {
     from {
         opacity: 0;
-        transform: translateY(10px) scale(0.98);
+        transform: translateY(-8px);
     }
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
 }
 
 @keyframes framePop {
     from {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
     to {
         opacity: 0;
-        transform: translateY(-10px) scale(0.98);
+        transform: translateY(-8px);
     }
 }
 
@@ -623,7 +638,7 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-/* Speed Dropdown with Dynamic Arrow Flip (Bolder Chevron & Windows Fix) */
+/* Speed Dropdown with Dynamic Arrow Flip */
 .speed-dropdown {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -710,6 +725,7 @@ html, body {
 
     .viz-canvas {
         min-height: 400px;
+        flex-direction: column;    /* Stack vertical on small width panels */
     }
 
     .playback-deck {

@@ -89,17 +89,60 @@ function renderStep(stepIndex) {
 
     DOM.vizCanvas.parentElement.classList.add('canvas-active');
 
-    // build variables section (only if variables exist at this step)
+    // 1. GENERATE CALL STACK SECTION (growing down on the left)
+    let stackHTML = '';
+    const stack = snapshot.stack || [];
+    const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
+
+    if (stack.length > 1) {
+        const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
+        let framesHTML = '';
+        
+        for (let i = 0; i < stack.length; i++) {
+            const frame = stack[i];
+            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
+            const isActive = (i === stack.length - 1);
+            const activeClass = isActive ? ' active-frame' : '';
+
+            // Only animate genuinely new stack frames (prevents blinking)
+            const isNewFrame = !prevLabels.has(funcName);
+            const animClass = isNewFrame ? ' frame-new' : '';
+
+            framesHTML += `
+                <div class="stack-frame${activeClass}${animClass}">
+                    <span class="frame-func">${funcName}</span>
+                </div>
+            `;
+        }
+
+        // Active frame is always the last element index (i = stack.length - 1)
+        // Each frame has a fixed height of 32px (defined in CSS)
+        // We multiply the index by 32 to calculate the absolute Y offset for the arrow!
+        const arrowOffset = (stack.length - 1) * 32;
+
+        stackHTML = `
+            <div class="viz-section">
+                <div class="viz-section-label">Call Stack</div>
+                <div class="stack-wrapper">
+                    <div class="stack-arrow-track">
+                        <div id="stack-arrow" class="stack-arrow" style="transform: translateY(${arrowOffset}px);">━━▶</div>
+                    </div>
+                    <div class="stack-frames">
+                        ${framesHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 2. GENERATE VARIABLES INLINE SECTION (flat REPL text lines)
     let varsHTML = '';
     const currentLocals = AppState.reconstructedLocals[stepIndex] || {};
     const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};
-    const varNames = Object.keys(currentLocals).filter(name => {
-        const val = currentLocals[name];
-        return typeof val !== 'function';       // safety net: skip any callables that slipped through
-    });
+    const varNames = Object.keys(currentLocals).filter(name => typeof currentLocals[name] !== 'function');
 
     if (varNames.length > 0) {
-        let chipsHTML = '';
+        let rowsHTML = '';
         for (const name of varNames) {
             const value = currentLocals[name];
             const type = getVariableType(value);
@@ -109,61 +152,27 @@ function renderStep(stepIndex) {
             const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);
             const changeClass = (isNew || isChanged) ? ' chip-changed' : '';
 
-            chipsHTML += `
-                <div class="var-chip${changeClass}" data-type="${type}">
-                    <div class="var-chip-head">
-                        <span class="var-chip-name">${name}</span>
-                        <span class="var-chip-type">${type}</span>
-                    </div>
-                    <div class="var-chip-value">${formattedValue}</div>
+            rowsHTML += `
+                <div class="var-row${changeClass}" data-type="${type}">
+                    <span class="var-name">${name}</span>
+                    <span class="var-colon">:</span>
+                    <span class="var-type">${type}</span>
+                    <span class="var-equals">=</span>
+                    <span class="var-value">${formattedValue}</span>
                 </div>
             `;
         }
         varsHTML = `
             <div class="viz-section">
-                <div class="viz-section-label">Active Variables (${varNames.length})</div>
-                <div class="var-chips">${chipsHTML}</div>
-            </div>
-        `;
-    }
-
-    // build call stack section (only if inside a function call)
-    let stackHTML = '';
-    const stack = snapshot.stack || [];
-    const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
-
-    if (stack.length > 1) {
-        // build set of previous stack labels for diffing
-        const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
-
-        let framesHTML = '';
-        for (let i = 0; i < stack.length; i++) {
-            const frame = stack[i];
-            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
-            const isActive = (i === stack.length - 1);
-            const activeClass = isActive ? ' active-frame' : '';
-
-            // only animate frames that are genuinely new (not in previous step's stack)
-            const isNewFrame = !prevLabels.has(funcName);
-            const animClass = isNewFrame ? ' frame-new' : '';
-
-            const arrow = isActive ? '<span class="frame-arrow">▶</span> ' : '';
-
-            framesHTML += `
-                <div class="stack-frame${activeClass}${animClass}">
-                    <span class="frame-func">${arrow}${funcName}</span>
+                <div class="viz-section-label">Variables</div>
+                <div class="var-rows">
+                    ${rowsHTML}
                 </div>
-            `;
-        }
-        stackHTML = `
-            <div class="viz-section">
-                <div class="viz-section-label">Call Stack (Depth: ${stack.length})</div>
-                <div class="stack-frames">${framesHTML}</div>
             </div>
         `;
     }
 
-    // build output section (accumulates print output up to current step)
+    // 3. GENERATE PROGRAM OUTPUT SECTION
     let outputHTML = '';
     let accumulatedOutput = '';
     for (let i = 0; i <= stepIndex; i++) {
@@ -175,35 +184,30 @@ function renderStep(stepIndex) {
 
     if (accumulatedOutput.length > 0) {
         const safeOutput = accumulatedOutput
-            .replace(/&/g, '&amp;')         // html escapes
+            .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         outputHTML = `
-            <div class="viz-section">
+            <div class="viz-section" style="width: 100%;">
                 <div class="viz-section-label">Output</div>
                 <div class="output-block"><pre>${safeOutput}</pre></div>
             </div>
         `;
     }
 
-    // build exception section (only if this step threw an error)
+    // 4. GENERATE RUNTIME EXCEPTION SECTION
     let errorHTML = '';
     if (snapshot.exception) {
         errorHTML = `
-            <div class="viz-section">
-                <div class="viz-section-label" style="color: var(--accent-coral);">Exception Raised</div>
-                <div class="var-chip" data-type="bool" style="border-color: var(--accent-coral);">
-                    <div class="var-chip-head">
-                        <span class="var-chip-name" style="color: var(--accent-coral);">${snapshot.exception.type}</span>
-                        <span class="var-chip-type" style="color: var(--accent-coral);">ERROR</span>
-                    </div>
-                    <div class="var-chip-value">${snapshot.exception.message}</div>
-                </div>
+            <div class="var-row" data-type="bool" style="margin-top: 10px;">
+                <span class="var-name" style="color: var(--accent-coral); font-weight: 700;">${snapshot.exception.type}</span>
+                <span class="var-colon">:</span>
+                <span class="var-value" style="color: var(--text-main);">${snapshot.exception.message}</span>
             </div>
         `;
     }
 
-    // update mode tag based on what is being displayed
+    // 5. UPDATE SYSTEM STATUS MODE HEADER
     if (snapshot.exception) {
         DOM.vizMode.innerText = 'EXCEPTION';
     } else if (varsHTML && stackHTML) {
@@ -218,6 +222,24 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
-    // inject everything into unified canvas in one DOM update
-    DOM.vizCanvas.innerHTML = errorHTML + outputHTML + varsHTML + stackHTML;
+    // 6. INJECT EVERYTHING INTO THE UNIFIED CANVAS
+    // If we have both stack and other assets, we split them side-by-side using Flex
+    if (stackHTML) {
+        DOM.vizCanvas.innerHTML = `
+            ${stackHTML}
+            <div class="viz-section section-fill">
+                ${errorHTML}
+                ${outputHTML}
+                ${varsHTML}
+            </div>
+        `;
+    } else {
+        DOM.vizCanvas.innerHTML = `
+            <div class="viz-section section-fill">
+                ${errorHTML}
+                ${outputHTML}
+                ${varsHTML}
+            </div>
+        `;
+    }
 }
