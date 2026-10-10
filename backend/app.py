@@ -1,6 +1,6 @@
 import os
 import hashlib          # for hash in cache
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -15,6 +15,23 @@ except ImportError:
 
 app = Flask(__name__)       # location of current module - to establish relative paths - app is the web server
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server
+
+# location of current module - to establish relative paths - app is the web server
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
+CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server
+
+# ── FRONTEND ROUTES ─────────────────────────────────────────────────────────
+
+@app.route('/')
+def serve_index():
+    # Serves frontend/index.html when user visits the homepage
+    return send_from_directory(FRONTEND_DIR, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    # Serves style.css, app.js, visualizer.js, controls.js
+    return send_from_directory(FRONTEND_DIR, path)
 
 limiter = Limiter(
     key_func=get_remote_address,        # each IP gets its own request counter
