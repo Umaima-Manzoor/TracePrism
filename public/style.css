@@ -340,7 +340,7 @@ html, body {
     transition: color var(--transition-normal);
 }
 
-/* ── INLINE VARIABLE ROWS (NO CARDS) ───────────────────────────────────── */
+/* INLINE VARIABLE ROWS (NO CARDS)  */
 .var-rows {
     display: flex;
     flex-direction: column;
@@ -443,7 +443,7 @@ html, body {
     word-break: break-word;
 }
 
-/* ── CALL STACK (GROWS UPWARD, NEW FRAMES ON TOP) ─────────────────────── */
+/*  CALL STACK (GROWS UPWARD, NEW FRAMES ON TOP) */
 .stack-wrapper {
     position: relative;
     display: flex;
