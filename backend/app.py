@@ -20,6 +20,9 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server
 
 # ── FRONTEND ROUTES ─────────────────────────────────────────────────────────
+@app.errorhandler(404)
+def debug_404(e):
+    return jsonify({'error': 'not found', 'path': request.path}), 404
 
 @app.route('/')
 def serve_index():
