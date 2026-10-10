@@ -45,7 +45,7 @@ class Tracer:
         }
 
         # capture any new stdout produced since the previous snapshot
-        if self._stdout_buffer is not None:
+        if self._stdout_buffer is not None:         # during a trace
             current_length = self._stdout_buffer.tell()     # returns current position
             if current_length > self._last_stdout_length:      # reads new chars only
                 self._stdout_buffer.seek(self._last_stdout_length)
@@ -157,8 +157,8 @@ class Tracer:
         }
 
         error_info = None
-        captured_output = io.StringIO()
-        old_stdout = sys.stdout
+        captured_output = io.StringIO()           # buffer to capture print() output
+        old_stdout = sys.stdout                   # save the real stdout for later restoration
         self._stdout_buffer = captured_output     # share buffer with trace callback
         self._last_stdout_length = 0              # reset counter
 
@@ -185,7 +185,7 @@ class Tracer:
 
         output_text = captured_output.getvalue().strip()
 
-                # filter out meaningless intermediate snapshots (empty module-level steps)
+        # filter out meaningless intermediate snapshots (empty module-level steps)
         filtered_snapshots = []
         for snap in self.snapshots:
             has_vars = len(snap['locals']) > 0

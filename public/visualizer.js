@@ -175,7 +175,7 @@ function renderStep(stepIndex) {
 
     if (accumulatedOutput.length > 0) {
         const safeOutput = accumulatedOutput
-            .replace(/&/g, '&amp;')
+            .replace(/&/g, '&amp;')         // html escapes
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
         outputHTML = `

@@ -9,12 +9,9 @@ try:
     from backend.python.tracer import Tracer
     from backend.python.processor import DeltaProcessor
 except ImportError:
-    try:
-        from python.tracer import Tracer
-        from python.processor import DeltaProcessor
-    except ImportError:
-        from tracer import Tracer
-        from processor import DeltaProcessor
+    from python.tracer import Tracer
+    from python.processor import DeltaProcessor
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
@@ -100,14 +97,13 @@ def trace_code():
     return jsonify(response_payload), 200
 
 
-# ── UNIVERSAL ROUTE HANDLER (CATCHES ALL URLS & DISPATCHES BY METHOD) ───────
-
+# universal route handler (catches all urls and dispatches)
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
 @limiter.exempt
 def universal_handler(path):
     if request.method == 'OPTIONS':
-        return '', 204
+        return '', 204              # yes allowed
     if request.method == 'POST':
         return trace_code()
     return health_check()
