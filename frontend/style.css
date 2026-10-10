@@ -12,19 +12,19 @@
     --text-dim: #585450;
 
     /* Brand & Accent Colors */
-    --accent-lime: #ffd7a8;             /* Soft Peach / Apricot - premium eye-safe accent */
+    --accent-lime: #ffd7a8;             /* Soft Peach / Apricot */
     --accent-lime-dim: #e6b88e;         /* Muted Peach for hovers */
     --accent-cyan: #8aa8a0;             /* Muted celadon */
     --accent-coral: #c07a72;            /* Muted clay */
 
-    /* Data Type Jewel Tones */
-    --type-int: #ffd7a8;                /* Soft Peach */
-    --type-float: #a0aab8;              /* Sterling */
-    --type-str: #82a88e;                /* Jade */
-    --type-bool: #c07a72;               /* Coral */
-    --type-list: #7898b8;               /* Steel blue */
-    --type-dict: #a088b0;               /* Wisteria */
-    --type-none: #96908a;               /* Stone */
+    /* Data Type Colors (readable on both dark and peach backgrounds) */
+    --type-int: #c47a20;                /* Rich amber - dark enough for peach bg */
+    --type-float: #2888b0;              /* Cerulean blue */
+    --type-str: #2e8b47;                /* Emerald green */
+    --type-bool: #cc3344;               /* Crimson red */
+    --type-list: #4a5aaa;               /* Deep indigo */
+    --type-dict: #8844aa;               /* Violet */
+    --type-none: #777777;               /* Neutral gray */
 
     /* Typography */
     --font-ui: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -377,6 +377,24 @@ html, body {
     animation: chipFlash 700ms var(--ease-out-soft);
 }
 
+/* program output section (print statements) */
+.output-block {
+    background-color: var(--bg-pane);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font-family: var(--font-code);
+    font-size: 13px;
+    color: var(--text-main);
+    overflow-x: auto;
+}
+
+.output-block pre {
+    margin: 0;
+    white-space: pre-wrap;      /* wrap long lines */
+    word-break: break-word;
+}
+
 /* call stack frames (also inside unified canvas) */
 .stack-frames {
     display: flex;
@@ -394,12 +412,16 @@ html, body {
     border-radius: var(--radius-md);
     font-family: var(--font-code);
     font-size: 13px;
+}
+
+/* Only genuinely new stack frames get the push animation */
+.stack-frame.frame-new {
     animation: framePush 320ms var(--ease-spring) forwards;
 }
 
 .stack-frame.active-frame {
     border-color: var(--accent-cyan);
-    background-color: rgba(138, 168, 160, 0.06); /* Matches --accent-cyan: #8aa8a0 */
+    background-color: var(--bg-element);  /* Solid dark gray background to maintain high readability */
 }
 
 .frame-func {

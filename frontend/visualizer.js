@@ -64,12 +64,12 @@ function renderStep(stepIndex) {
     // idle state - reset everything to default
     if (stepIndex < 0 || !AppState.snapshots || !AppState.snapshots[stepIndex]) {
         highlightLine(null);
-        DOM.vizCanvas.parentElement.classList.remove('canvas-active');        // dark bg
+        DOM.vizCanvas.parentElement.classList.remove('canvas-active');
         DOM.vizCanvas.innerHTML = `
             <div class="canvas-placeholder">
                 <span class="placeholder-title">No Active Execution</span>
                 <span class="placeholder-sub">Click "Run Trace" to visualize runtime execution</span>
-            </div> 
+            </div>
         `;
         DOM.stepIndicator.innerText = 'READY';
         DOM.vizMode.innerText = 'IDLE';
@@ -80,20 +80,23 @@ function renderStep(stepIndex) {
     AppState.currentStep = stepIndex;
     const snapshot = AppState.snapshots[stepIndex];
 
-    highlightLine(snapshot.line);       // current line
+    highlightLine(snapshot.line);
 
     // updating headers and slider
     DOM.stepIndicator.innerText = `STEP ${stepIndex + 1} / ${AppState.totalSteps}`;
     DOM.stepCounter.innerText = `${stepIndex + 1} / ${AppState.totalSteps}`;
     DOM.timelineSlider.value = stepIndex;
 
-    DOM.vizCanvas.parentElement.classList.add('canvas-active');       // lighter bg for animation
+    DOM.vizCanvas.parentElement.classList.add('canvas-active');
 
     // build variables section (only if variables exist at this step)
     let varsHTML = '';
     const currentLocals = AppState.reconstructedLocals[stepIndex] || {};
     const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};
-    const varNames = Object.keys(currentLocals);
+    const varNames = Object.keys(currentLocals).filter(name => {
+        const val = currentLocals[name];
+        return typeof val !== 'function';       // safety net: skip any callables that slipped through
+    });
 
     if (varNames.length > 0) {
         let chipsHTML = '';
@@ -103,7 +106,7 @@ function renderStep(stepIndex) {
             const formattedValue = formatVariableValue(value);
 
             const isNew = !(name in previousLocals);
-            const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);     // compare strings not memory refs
+            const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);
             const changeClass = (isNew || isChanged) ? ' chip-changed' : '';
 
             chipsHTML += `
@@ -127,20 +130,28 @@ function renderStep(stepIndex) {
     // build call stack section (only if inside a function call)
     let stackHTML = '';
     const stack = snapshot.stack || [];
+    const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
 
     if (stack.length > 1) {
+        // build set of previous stack labels for diffing
+        const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
+
         let framesHTML = '';
         for (let i = 0; i < stack.length; i++) {
-            const funcName = stack[i];
-            const isActive = (i === stack.length - 1);      // last element is the currently executing function
+            const frame = stack[i];
+            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
+            const isActive = (i === stack.length - 1);
             const activeClass = isActive ? ' active-frame' : '';
+
+            // only animate frames that are genuinely new (not in previous step's stack)
+            const isNewFrame = !prevLabels.has(funcName);
+            const animClass = isNewFrame ? ' frame-new' : '';
+
             const arrow = isActive ? '<span class="frame-arrow">▶</span> ' : '';
-            const lineInfo = isActive ? `line ${snapshot.line}` : 'paused';     // parent funcs are paused - waiting for child to return
 
             framesHTML += `
-                <div class="stack-frame${activeClass}">
+                <div class="stack-frame${activeClass}${animClass}">
                     <span class="frame-func">${arrow}${funcName}</span>
-                    <span class="frame-line">${lineInfo}</span>
                 </div>
             `;
         }
@@ -148,6 +159,23 @@ function renderStep(stepIndex) {
             <div class="viz-section">
                 <div class="viz-section-label">Call Stack (Depth: ${stack.length})</div>
                 <div class="stack-frames">${framesHTML}</div>
+            </div>
+        `;
+    }
+
+    // build output section (only if program produced print() output)
+    let outputHTML = '';
+    const outputText = AppState.output || '';
+    if (outputText.length > 0) {
+        // escape HTML characters in output to prevent injection
+        const safeOutput = outputText
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        outputHTML = `
+            <div class="viz-section">
+                <div class="viz-section-label">Output</div>
+                <div class="output-block"><pre>${safeOutput}</pre></div>
             </div>
         `;
     }
@@ -178,10 +206,12 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'CALL STACK';
     } else if (varsHTML) {
         DOM.vizMode.innerText = 'VARIABLES';
+    } else if (outputHTML) {
+        DOM.vizMode.innerText = 'OUTPUT';
     } else {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
     // inject everything into unified canvas in one DOM update
-    DOM.vizCanvas.innerHTML = errorHTML + varsHTML + stackHTML;
+    DOM.vizCanvas.innerHTML = errorHTML + outputHTML + varsHTML + stackHTML;
 }
