@@ -1,6 +1,6 @@
 import os
 import hashlib          # for hash in cache
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -10,10 +10,17 @@ try:
     from backend.python.tracer import Tracer
     from backend.python.processor import DeltaProcessor
 except ImportError:
-    from python.tracer import Tracer
-    from python.processor import DeltaProcessor
+    try:
+        from python.tracer import Tracer
+        from python.processor import DeltaProcessor
+    except ImportError:
+        from tracer import Tracer
+        from processor import DeltaProcessor
 
-app = Flask(__name__)
+# Resolve absolute path to the frontend directory
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
 
 limiter = Limiter(
@@ -27,6 +34,21 @@ tracer = Tracer()
 processor = DeltaProcessor(keyframe_interval=100)
 CACHE = {}
 
+# ── FRONTEND STATIC ROUTES ──────────────────────────────────────────────────
+
+@app.route('/')
+def serve_index():
+    # Serves frontend/index.html when user visits the homepage
+    return send_from_directory(FRONTEND_DIR, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    # Serves style.css, app.js, visualizer.js, controls.js
+    if os.path.exists(os.path.join(FRONTEND_DIR, path)):
+        return send_from_directory(FRONTEND_DIR, path)
+    return jsonify({'error': 'Not found'}), 404
+
+# ── API ENDPOINTS ───────────────────────────────────────────────────────────
 
 @app.route('/health', methods=['GET'])
 @limiter.exempt                         # to exclude the pinging from using the user's quota
