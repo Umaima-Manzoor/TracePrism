@@ -10,12 +10,8 @@ try:
     from backend.python.tracer import Tracer
     from backend.python.processor import DeltaProcessor
 except ImportError:
-    try:
         from python.tracer import Tracer
         from python.processor import DeltaProcessor
-    except ImportError:
-        from tracer import Tracer
-        from processor import DeltaProcessor
 
 app = Flask(__name__)       # location of current module - to establish relative paths - app is the web server
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain to anywhere inside the server
