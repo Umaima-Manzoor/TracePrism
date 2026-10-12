@@ -1,8 +1,8 @@
-import sys              # for sys.settrace
-import copy             # for deepcopy
-import io               # for capturing print() output
-import logging          # for proper logger (not root logger)
-from typing import ClassVar     # for marking class-level constants
+import copy  # for deepcopy
+import io  # for capturing print() output
+import logging  # for proper logger (not root logger)
+import sys  # for sys.settrace
+from typing import ClassVar  # for marking class-level constants
 
 logger = logging.getLogger(__name__)        # proper named logger instead of root
 

@@ -1,16 +1,17 @@
+import hashlib  # for hash in cache
 import os
-import hashlib          # for hash in cache
-from flask import Flask, request, jsonify
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_limiter import Limiter
 
 # Robust import resolution for both local execution and Vercel serverless
 try:
-    from backend.python.tracer import Tracer
     from backend.python.processor import DeltaProcessor
+    from backend.python.tracer import Tracer
 except ImportError:
-    from python.tracer import Tracer
     from python.processor import DeltaProcessor
+    from python.tracer import Tracer
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
@@ -111,4 +112,4 @@ def universal_handler(path):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', '5000'))          # default as string to satisfy env var type
-    app.run(host='0.0.0.0', port=port, debug=True)      # noqa: S104   intentional bind on all interfaces for local dev + Render
+    app.run(host='0.0.0.0', port=port, debug=True)
