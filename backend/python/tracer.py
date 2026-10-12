@@ -1,12 +1,16 @@
 import sys              # for sys.settrace
 import copy             # for deepcopy
 import io               # for capturing print() output
+import logging          # for proper logger (not root logger)
+from typing import ClassVar     # for marking class-level constants
+
+logger = logging.getLogger(__name__)        # proper named logger instead of root
 
 class Tracer:
 
-    BLOCKED_MODULES = { 'os', 'subprocess', 'socket', 'shutil', 'sys', 'pathlib', 'ctypes', 'pickle', 'marshal', 'code', 'codeop', 'importlib', 'multiprocessing', 'threading', 'signal' }
+    BLOCKED_MODULES: ClassVar[set] = { 'os', 'subprocess', 'socket', 'shutil', 'sys', 'pathlib', 'ctypes', 'pickle', 'marshal', 'code', 'codeop', 'importlib', 'multiprocessing', 'threading', 'signal' }
 
-    BLOCKED_BUILTINS = { 'exec', 'eval', 'compile', 'open', 'input', 'breakpoint', 'globals', 'locals', 'vars', 'dir' }
+    BLOCKED_BUILTINS: ClassVar[set] = { 'exec', 'eval', 'compile', 'open', 'input', 'breakpoint', 'globals', 'locals', 'vars', 'dir' }
 
     def __init__(self):
         self.snapshots = []
@@ -29,8 +33,7 @@ class Tracer:
             if self._call_stack:
                 self._call_stack.pop()
             else:
-                import logging
-                logging.warning("Return even with empty call stack.")
+                logger.warning("Return even with empty call stack.")
 
         safe_locals = self._sanitize_locals(frame.f_locals)
 
@@ -45,7 +48,7 @@ class Tracer:
         }
 
         # capture any new stdout produced since the previous snapshot
-        if self._stdout_buffer is not None:         # during a trace
+        if self._stdout_buffer is not None:
             current_length = self._stdout_buffer.tell()     # returns current position
             if current_length > self._last_stdout_length:      # reads new chars only
                 self._stdout_buffer.seek(self._last_stdout_length)
@@ -62,7 +65,7 @@ class Tracer:
             snapshot['return_value'] = self._make_serializable(arg)
 
         if event == 'exception' and arg is not None:
-            exc_type, exc_value, exc_tb = arg
+            exc_type, exc_value, _exc_tb = arg      # _exc_tb unused but required by tuple shape
             snapshot['exception'] = {
                 'type': exc_type.__name__,
                 'message': str(exc_value),
@@ -77,7 +80,7 @@ class Tracer:
         return self._trace_callback
 
 
-    def _make_serializable(self, value):
+    def _make_serializable(self, value):        # single python value to json
         if value is None:
             return None
         if isinstance(value, bool):
@@ -116,7 +119,7 @@ class Tracer:
         return sanitized
 
 
-    def trace(self, source_code):
+    def trace(self, source_code):       # main func called by Flask API
         self.snapshots = []
         self._step_counter = 0
         self._call_stack = []
@@ -157,22 +160,22 @@ class Tracer:
         }
 
         error_info = None
-        captured_output = io.StringIO()           # buffer to capture print() output
-        old_stdout = sys.stdout                   # save the real stdout for later restoration
+        captured_output = io.StringIO()
+        old_stdout = sys.stdout
         self._stdout_buffer = captured_output     # share buffer with trace callback
         self._last_stdout_length = 0              # reset counter
 
         try:
             sys.stdout = captured_output      # redirect all print() to our buffer
             sys.settrace(self._trace_callback)
-            exec(compiled_code, exec_globals)
+            exec(compiled_code, exec_globals)       # noqa: S102   intentional sandboxed execution of user code
         except RuntimeError as e:
             error_info = {
                 'error': True,
                 'error_type': 'RuntimeError',
                 'message': str(e),
             }
-        except Exception as e:
+        except Exception as e:      # noqa: BLE001   intentional broad catch for arbitrary user-code errors
             error_info = {
                 'error': True,
                 'error_type': type(e).__name__,
@@ -205,7 +208,6 @@ class Tracer:
                 and not last.get('step_output')
                 and 'exception' not in last
             )
-            # keep the last meaningful step even if it's a return
             if is_trailing_empty and len(filtered_snapshots) > 1:
                 prev = filtered_snapshots[-2]
                 if prev['locals'] == last['locals']:

@@ -12,7 +12,6 @@ except ImportError:
     from python.tracer import Tracer
     from python.processor import DeltaProcessor
 
-
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
 
@@ -97,18 +96,19 @@ def trace_code():
     return jsonify(response_payload), 200
 
 
-# universal route handler (catches all urls and dispatches)
+# ── UNIVERSAL ROUTE HANDLER (CATCHES ALL URLS & DISPATCHES BY METHOD) ───────
+
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
 @limiter.exempt
 def universal_handler(path):
     if request.method == 'OPTIONS':
-        return '', 204              # yes allowed
+        return '', 204
     if request.method == 'POST':
         return trace_code()
     return health_check()
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    port = int(os.environ.get('PORT', '5000'))          # default as string to satisfy env var type
+    app.run(host='0.0.0.0', port=port, debug=True)      # noqa: S104   intentional bind on all interfaces for local dev + Render
