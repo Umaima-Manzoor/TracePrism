@@ -97,8 +97,7 @@ def trace_code():
     return jsonify(response_payload), 200
 
 
-# ── UNIVERSAL ROUTE HANDLER (CATCHES ALL URLS & DISPATCHES BY METHOD) ───────
-
+# universal route handler - catches all urls and dispatches by method
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
 @limiter.exempt

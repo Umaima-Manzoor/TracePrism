@@ -88,7 +88,7 @@ function renderStep(stepIndex) {
 
     DOM.vizCanvas.parentElement.classList.add('canvas-active');
 
-    // 1. BUILD VARIABLES SECTION (inline rows, truncation on long values)
+    // variable sections (inline rows, truncation on long values)
     let varsHTML = '';
     const currentLocals = AppState.reconstructedLocals[stepIndex] || {};
     const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};
@@ -131,7 +131,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // 2. BUILD CALL STACK SECTION (grows upward, new frames on top)
+    // call stack section (grows upward, new frames on top)
     let stackHTML = '';
     const stack = snapshot.stack || [];
     const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
@@ -184,7 +184,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // 3. BUILD PROGRAM OUTPUT SECTION (accumulated up to current step)
+    // output section (accumulated up to current step)
     let outputHTML = '';
     let accumulatedOutput = '';
     for (let i = 0; i <= stepIndex; i++) {
@@ -207,7 +207,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // 4. BUILD EXCEPTION SECTION
+    // exception section
     let errorHTML = '';
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
@@ -226,7 +226,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // 5. UPDATE STATUS MODE TAG
+    // update status mode tag
     if (snapshot.exception) {
         DOM.vizMode.innerText = 'EXCEPTION';
     } else if (varsHTML && stackHTML) {
@@ -241,10 +241,9 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
-    // 6. INJECT INTO CANVAS: VARIABLES FIRST, THEN STACK, THEN OUTPUT, THEN ERROR
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorHTML;
 
-    // 7. ATTACH CLICK HANDLERS FOR VALUE EXPAND/COLLAPSE
+    // attach click handlers for value expand/collapse
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
     valueElements.forEach(el => {
         el.addEventListener('click', () => {
