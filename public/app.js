@@ -132,18 +132,6 @@ AppState.editor.on('change', function(cm, changeObj) {
         }
     }, 75);
 });
-    clearTimeout(autocompleteTimeout);
-    autocompleteTimeout = setTimeout(function() {
-        const cursor = cm.getCursor();
-        const token = cm.getTokenAt(cursor);
-        if (token.string.length >= 2 && /^[a-zA-Z_]+$/.test(token.string)) {
-            const matches = PYTHON_KEYWORDS.filter(kw => kw.startsWith(token.string) && kw !== token.string);
-            if (matches.length > 0) {
-                cm.showHint({ completeSingle: false });
-            }
-        }
-    }, 75);
-});
 
 AppState.editor.on('blur', updateEditingHighlightVisibility);
 AppState.editor.on('focus', updateEditingHighlightVisibility);
