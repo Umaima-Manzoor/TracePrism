@@ -145,8 +145,12 @@ function highlightLine(lineNumber) {
 
     if (lineNumber === null || lineNumber <= 0) {
         AppState.highlightedLine = null;
+        cm.setOption('styleActiveLine', true);      // restore blue editing bar when trace ends
         return;
     }
+
+    // animation highlight takes priority - hide blue editing bar during trace
+    cm.setOption('styleActiveLine', false);
 
     // CodeMirror lines are 0-indexed, our snapshots are 1-indexed
     const cmLine = lineNumber - 1;
