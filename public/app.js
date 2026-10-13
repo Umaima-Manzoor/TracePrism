@@ -25,6 +25,7 @@ const DOM = {
     vizMode: document.getElementById('viz-mode'),           // status tag at canvas top
     
     // Controls Bar Elements
+    btnClear: document.getElementById('btn-clear'),         // clear animation button
     btnFirst: document.getElementById('btn-first'),         // home button
     btnPrev: document.getElementById('btn-prev'),           // prev button
     btnPlay: document.getElementById('btn-play'),           // play button
