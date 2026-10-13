@@ -308,7 +308,7 @@ function renderStep(stepIndex) {
             <div class="viz-section">
                 <div class="viz-section-label">Output</div>
                 <div class="output-block"><pre>${safeOutput}</pre></div>
-                <div class="output-toggle" style="display:none;">Show more ▼</div>
+                <div class="output-hint">▼ click to expand</div>
             </div>
         `;
     }
@@ -386,18 +386,29 @@ function renderStep(stepIndex) {
 
     // Output click-to-expand/collapse
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
-    if (outputBlock) {
-        requestAnimationFrame(() => {
-            if (outputBlock.scrollHeight > outputBlock.clientHeight) {
-                outputBlock.classList.add('show-hint');
-            }
-            if (wasOutputExpanded) {
-                outputBlock.classList.add('expanded');
-            }
-        });
+    const outputHint = DOM.vizCanvas.querySelector('.output-hint');
 
-        outputBlock.addEventListener('click', () => {
+    if (outputBlock && outputHint) {
+        // Check overflow synchronously (no requestAnimationFrame needed)
+        const overflows = outputBlock.scrollHeight > outputBlock.clientHeight;
+
+        if (hasOutput && overflows) {
+            outputHint.classList.add('visible');
+        }
+
+        // Restore expanded state if it was expanded before re-render
+        if (wasOutputExpanded && overflows) {
+            outputBlock.classList.add('expanded');
+            outputHint.textContent = '▲ click to collapse';
+        }
+
+        outputHint.addEventListener('click', () => {
             outputBlock.classList.toggle('expanded');
+            if (outputBlock.classList.contains('expanded')) {
+                outputHint.textContent = '▲ click to collapse';
+            } else {
+                outputHint.textContent = '▼ click to expand';
+            }
         });
     }
 }

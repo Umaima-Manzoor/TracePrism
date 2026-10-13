@@ -536,13 +536,9 @@ html, body {
     word-break: break-word;
 }
 
-/* "click to expand" hint - solid bar, no gradient */
-.output-block.show-hint:not(.expanded)::after {
-    content: '▼ click to expand';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+/* Output hint bar (expand/collapse) - real element, not pseudo-element */
+.output-hint {
+    display: none;
     padding: 6px;
     text-align: center;
     font-family: var(--font-ui);
@@ -551,24 +547,17 @@ html, body {
     color: var(--accent-cyan);
     background-color: var(--bg-pane);
     border-top: 1px solid var(--border-color);
-    pointer-events: none;
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition-fast);
 }
 
-/* "click to collapse" hint - same solid bar style */
-.output-block.show-hint.expanded::after {
-    content: '▲ click to collapse';
-    position: sticky;
-    bottom: 0;
+.output-hint:hover {
+    color: var(--text-main);
+}
+
+.output-hint.visible {
     display: block;
-    padding: 6px;
-    text-align: center;
-    font-family: var(--font-ui);
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--accent-cyan);
-    background-color: var(--bg-pane-header);
-    border-top: 1px solid var(--border-color);
-    pointer-events: none;
 }
 
 /* error overlay: 25% semi-transparent dark layer with vertically centered card group */
