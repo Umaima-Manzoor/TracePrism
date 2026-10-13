@@ -304,11 +304,18 @@ function renderStep(stepIndex) {
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+
+        // Bake expanded state into HTML so there is no collapse flash on re-render
+        const wasExpanded = wasOutputExpanded;
+        const blockClass = wasExpanded ? 'output-block expanded' : 'output-block';
+        const hintText = wasExpanded ? '▲ click to collapse' : '▼ click to expand';
+        const hintClass = wasExpanded ? 'output-hint visible' : 'output-hint';
+
         outputHTML = `
             <div class="viz-section">
                 <div class="viz-section-label">Output</div>
-                <div class="output-block"><pre>${safeOutput}</pre></div>
-                <div class="output-hint">▼ click to expand</div>
+                <div class="${blockClass}"><pre>${safeOutput}</pre></div>
+                <div class="${hintClass}">${hintText}</div>
             </div>
         `;
     }
@@ -377,35 +384,29 @@ function renderStep(stepIndex) {
         });
     });
 
-    // Output click-to-expand/collapse
+        // Output click-to-expand/collapse
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
     const outputHint = DOM.vizCanvas.querySelector('.output-hint');
 
     if (outputBlock && outputHint) {
+        // Only show hint if content overflows (synchronous check)
         const overflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
-
-        if (overflows) {
+        if (overflows && !outputHint.classList.contains('visible')) {
             outputHint.classList.add('visible');
         }
 
-        if (wasOutputExpanded && overflows) {
-            outputBlock.classList.add('expanded');
-            outputHint.textContent = '▲ click to collapse';
-        }
+        const toggleOutput = () => {
+            outputBlock.classList.toggle('expanded');
+            outputHint.textContent = outputBlock.classList.contains('expanded')
+                ? '▲ click to collapse'
+                : '▼ click to expand';
+        };
 
         outputHint.addEventListener('click', (e) => {
             e.stopPropagation();
-            outputBlock.classList.toggle('expanded');
-            outputHint.textContent = outputBlock.classList.contains('expanded')
-                ? '▲ click to collapse'
-                : '▼ click to expand';
+            toggleOutput();
         });
 
-        outputBlock.addEventListener('click', () => {
-            outputBlock.classList.toggle('expanded');
-            outputHint.textContent = outputBlock.classList.contains('expanded')
-                ? '▲ click to collapse'
-                : '▼ click to expand';
-        });
+        outputBlock.addEventListener('click', toggleOutput);
     }
 }
