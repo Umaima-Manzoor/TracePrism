@@ -48,7 +48,7 @@ async function runTrace() {
         precomputeAllLocals();                  // Pre-compute O(1) state array
 
         // Set up scrubber max and render first meaningful step
-        DOM.timelineSlider.max = AppState.totalSteps - 1;
+        DOM.timelineSlider.max = AppState.totalSteps > 0 ? AppState.totalSteps - 1 : 0;
         renderStep(0);
 
     } catch (err) {     // network errors

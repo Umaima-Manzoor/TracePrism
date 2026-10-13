@@ -113,7 +113,7 @@ const ERROR_SUGGESTIONS = {
     'KeyError': 'The key does not exist in the dictionary. Check your dictionary keys.',
     'AttributeError': 'The object does not have this attribute or method. Check the object type.',
     'RecursionError': 'Maximum recursion depth exceeded. Check your base case in the recursive function.',
-    'RuntimeError': 'Execution exceeded the step limit. Check for infinite loops.',
+    'RuntimeError': 'Execution exceeded the time/step limit. Check for infinite loops.',
     'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
 };
 
@@ -121,17 +121,15 @@ const ERROR_SUGGESTIONS = {
 function renderError(errorObj) {
     const errorType = errorObj.error_type || 'Error';
     const errorMsg = errorObj.message || 'An unknown error occurred.';
-    // handle combined error types (e.g. "ImportError + SyntaxError")
     let suggestion = '';
     if (errorType.includes('+')) {
         const types = errorType.split('+').map(t => t.trim());
-        const suggestions = types.map(t => ERROR_SUGGESTIONS[t]).filter(Boolean);   // removes undefined entries
+        const suggestions = types.map(t => ERROR_SUGGESTIONS[t]).filter(Boolean);
         suggestion = suggestions.length > 0 ? suggestions.join(' ') : 'Review your code and try again.';
     } else {
         suggestion = ERROR_SUGGESTIONS[errorType] || 'Review your code and try again.';
     }
 
-    // clear all stale state to prevent old animations from playing
     pausePlayback();
     AppState.snapshots = [];
     AppState.totalSteps = 0;
@@ -144,7 +142,6 @@ function renderError(errorObj) {
         highlightLine(null);
     }
 
-    // keep peach bg active, error card sits on top of it
     DOM.vizCanvas.parentElement.classList.add('canvas-active');
     DOM.stepIndicator.innerText = errorType.toUpperCase();
     DOM.vizMode.innerText = 'ERROR';
@@ -192,13 +189,15 @@ function renderStep(stepIndex) {
 
     highlightLine(snapshot.line);
 
-    DOM.stepIndicator.innerText = `STEP ${stepIndex + 1} / ${AppState.totalSteps}`;
-    DOM.stepCounter.innerText = `${stepIndex + 1} / ${AppState.totalSteps}`;
+    // Display Step 0-indexed: "STEP 0 / 6" up to "STEP 6 / 6"
+    const maxStepIndex = AppState.totalSteps > 0 ? AppState.totalSteps - 1 : 0;
+    DOM.stepIndicator.innerText = `STEP ${stepIndex} / ${maxStepIndex}`;
+    DOM.stepCounter.innerText = `${stepIndex} / ${maxStepIndex}`;
     DOM.timelineSlider.value = stepIndex;
 
     DOM.vizCanvas.parentElement.classList.add('canvas-active');
 
-    // variable sections (inline rows, truncation on long values)
+    // VARIABLE SECTION ([type] name = value format)
     let varsHTML = '';
     const currentLocals = AppState.reconstructedLocals[stepIndex] || {};
     const previousLocals = stepIndex > 0 ? AppState.reconstructedLocals[stepIndex - 1] : {};
@@ -215,7 +214,6 @@ function renderStep(stepIndex) {
             const isChanged = !isNew && JSON.stringify(previousLocals[name]) !== JSON.stringify(value);
             const changeClass = (isNew || isChanged) ? ' chip-changed' : '';
 
-            // Escape HTML in value to prevent injection
             const safeValue = formattedValue
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -228,9 +226,8 @@ function renderStep(stepIndex) {
 
             rowsHTML += `
                 <div class="var-row${changeClass}" data-type="${type}">
+                    <span class="var-type-tag">[${type}]</span>
                     <span class="var-name">${name}</span>
-                    <span class="var-colon">:</span>
-                    <span class="var-type">${type}</span>
                     <span class="var-equals">=</span>
                     <span class="var-value"${nestedAttr} title="Click to expand/collapse">${safeValue}</span>
                 </div>
@@ -246,7 +243,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // call stack section (grows upward, new frames on top)
+    // CALL STACK SECTION (grows upward, new frames on top, bold ➤ arrow)
     let stackHTML = '';
     const stack = snapshot.stack || [];
     const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
@@ -255,8 +252,6 @@ function renderStep(stepIndex) {
         const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
         let framesHTML = '';
 
-        // Render in natural order (index 0 = main, last = active)
-        // CSS column-reverse will visually flip so last (active) appears at TOP
         for (let i = 0; i < stack.length; i++) {
             const frame = stack[i];
             const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
@@ -266,7 +261,6 @@ function renderStep(stepIndex) {
             const isNewFrame = !prevLabels.has(funcName);
             const animClass = isNewFrame ? ' frame-new' : '';
 
-            // Escape HTML in function name
             const safeFuncName = funcName
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -279,17 +273,12 @@ function renderStep(stepIndex) {
             `;
         }
 
-        // Arrow position: since column-reverse flips the order, the active frame
-        // (last in array) is visually at the TOP (position 0 from top)
-        // So the arrow stays at position 0 pointing to the top frame
-        const arrowOffset = 0;
-
         stackHTML = `
             <div class="viz-section">
                 <div class="viz-section-label">Call Stack</div>
                 <div class="stack-wrapper">
                     <div class="stack-arrow-track">
-                        <div id="stack-arrow" class="stack-arrow" style="transform: translateY(${arrowOffset}px);">▶</div>
+                        <div id="stack-arrow" class="stack-arrow">➤</div>
                     </div>
                     <div class="stack-frames">
                         ${framesHTML}
@@ -299,7 +288,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // output section (accumulated up to current step)
+    // OUTPUT SECTION (accumulated up to current step with click-to-expand)
     let outputHTML = '';
     let accumulatedOutput = '';
     for (let i = 0; i <= stepIndex; i++) {
@@ -317,12 +306,12 @@ function renderStep(stepIndex) {
         outputHTML = `
             <div class="viz-section">
                 <div class="viz-section-label">Output</div>
-                <div class="output-block"><pre>${safeOutput}</pre></div>
+                <div class="output-block" title="Click to expand/collapse"><pre>${safeOutput}</pre></div>
             </div>
         `;
     }
 
-    // exception overlay (shown on top of animation, not replacing it)
+    // EXCEPTION OVERLAY (shown on top of animation state)
     let errorOverlayHTML = '';
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
@@ -344,8 +333,10 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'EXCEPTION';
     }
 
-    // update status mode tag
-    if (varsHTML && stackHTML) {
+    //  UPDATE STATUS MODE TAG
+    if (snapshot.exception) {
+        DOM.vizMode.innerText = 'EXCEPTION';
+    } else if (varsHTML && stackHTML) {
         DOM.vizMode.innerText = 'VARS + STACK';
     } else if (stackHTML) {
         DOM.vizMode.innerText = 'CALL STACK';
@@ -359,31 +350,33 @@ function renderStep(stepIndex) {
 
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
-    // attach click handlers for value expand/collapse
+    // Attach click handlers for expandable values & output
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
-    valueElements.forEach((el, index) => {
+    valueElements.forEach((el) => {
         el.addEventListener('click', () => {
             el.classList.toggle('expanded');
-            // swap between compact and pretty format for nested structures
             if (el.getAttribute('data-nested') === 'true') {
-                if (el.classList.contains('expanded')) {
-                    const varName = el.parentElement.querySelector('.var-name').textContent;
-                    const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
-                    if (rawValue !== undefined) {
+                const varName = el.parentElement.querySelector('.var-name').textContent;
+                const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
+                if (rawValue !== undefined) {
+                    if (el.classList.contains('expanded')) {
                         const pretty = formatVariablePretty(rawValue)
                             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                         el.innerHTML = pretty;
-                    }
-                } else {
-                    const varName = el.parentElement.querySelector('.var-name').textContent;
-                    const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
-                    if (rawValue !== undefined) {
+                    } else {
                         const compact = formatVariableValue(rawValue)
                             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                         el.textContent = compact;
                     }
                 }
             }
+        });
+    });
+
+    const outputBlocks = DOM.vizCanvas.querySelectorAll('.output-block');
+    outputBlocks.forEach((block) => {
+        block.addEventListener('click', () => {
+            block.classList.toggle('expanded');
         });
     });
 }

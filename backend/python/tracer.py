@@ -1,8 +1,9 @@
-import ast  # for scanning blocked imports before execution
-import copy  # for deepcopy
-import io  # for capturing print() output
+import ast      # for scanning blocked imports before execution
+import copy      # for deepcopy
+import io       # for capturing print() output
 import logging  # for proper logger (not root logger)
-import sys  # for sys.settrace
+import sys      # for sys.settrace
+import time     # for 5-sec execution timeout check
 from typing import ClassVar  # for marking class-level constants
 
 logger = logging.getLogger(__name__)        # proper named logger instead of root
@@ -19,6 +20,7 @@ class Tracer:
         self._call_stack = []
         self._stdout_buffer = None       # reference to active stdout buffer
         self._last_stdout_length = 0     # tracks how much output was captured before this step
+        self._start_time = 0            # timestamp when execution began
 
     def _check_blocked_imports(self, source_code):       # scan all imports before execution
         blocked = []
@@ -123,6 +125,9 @@ class Tracer:
 
         if self._step_counter > 50000:
             raise RuntimeError("TracePrism: Execution exceeded 50,000 steps. \nPossible infinite loop detected.")
+
+        if time.time() - self._start_time > 5.0:
+            raise RuntimeError("TracePrism: Execution timed out (5.0s limit exceeded)")
 
         return self._trace_callback
 
@@ -237,6 +242,7 @@ class Tracer:
         self._last_stdout_length = 0              # reset counter
 
         try:
+            self._start_time = time.time()      # start the 5-second stopwatch
             sys.stdout = captured_output      # redirect all print() to our buffer
             sys.settrace(self._trace_callback)
             exec(compiled_code, exec_globals)       # noqa: S102
