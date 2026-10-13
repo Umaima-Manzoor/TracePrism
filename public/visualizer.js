@@ -306,7 +306,7 @@ function renderStep(stepIndex) {
             .replace(/>/g, '&gt;');
 
         // Bake expanded state into HTML so there is no collapse flash on re-render
-        const wasExpanded = wasOutputExpanded;
+        const wasExpanded = false;
         const blockClass = wasExpanded ? 'output-block expanded' : 'output-block';
         const hintText = wasExpanded ? '▲ click to collapse' : '▼ click to expand';
         const hintClass = wasExpanded ? 'output-hint visible' : 'output-hint';
@@ -359,10 +359,19 @@ function renderStep(stepIndex) {
 
     // Save output expanded state before re-rendering
     const prevOutputBlock = DOM.vizCanvas.querySelector('.output-block');
-    const wasOutputExpanded = prevOutputBlock !== null && prevOutputBlock.classList.contains('expanded');
+       // Save output expanded state before re-rendering
+    const wasOutputExpanded = DOM.vizCanvas.querySelector('.output-block.expanded') !== null;
+
+    // If output was expanded, update the HTML string before injecting
+    if (wasOutputExpanded && outputHTML) {
+        outputHTML = outputHTML
+            .replace('class="output-block"', 'class="output-block expanded"')
+            .replace('class="output-hint"', 'class="output-hint visible"')
+            .replace('▼ click to expand', '▲ click to collapse');
+    }
 
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
-
+    
     // Attach click handlers for expandable nested values
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]');
     valueElements.forEach((el) => {
