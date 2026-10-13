@@ -106,6 +106,26 @@ function initEditor() {
 
 initEditor();       // create the editor on page load
 
+// auto-show autocomplete suggestions as user types (like VS Code)
+let autocompleteTimeout = null;
+AppState.editor.on('change', function(cm, changeObj) {
+    // don't auto-trigger on deletions, pastes, or undo/redo
+    if (changeObj.origin === '+delete' || changeObj.origin === 'paste' || changeObj.origin === 'undo' || changeObj.origin === 'redo') return;
+
+    clearTimeout(autocompleteTimeout);
+    autocompleteTimeout = setTimeout(function() {
+        const cursor = cm.getCursor();
+        const token = cm.getTokenAt(cursor);
+        // only auto-trigger if user typed at least 2 characters of a word - and only for letters and underscores
+        if (token.string.length >= 2 && /^[a-zA-Z_]+$/.test(token.string)) {
+            const matches = PYTHON_KEYWORDS.filter(kw => kw.startsWith(token.string) && kw !== token.string);
+            if (matches.length > 0) {
+                cm.showHint({ completeSingle: false });
+            }
+        }
+    }, 300);     // 300ms delay so it doesn't fire on every single keystroke
+});
+
 function highlightLine(lineNumber) {
     const cm = AppState.editor;
     if (!cm) return;
