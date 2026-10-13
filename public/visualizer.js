@@ -351,19 +351,12 @@ function renderStep(stepIndex) {
     }
 
     // Save output expanded state before re-rendering
-    const wasOutputExpanded = DOM.vizCanvas.querySelector('.output-block.expanded') !== null;
+    const prevOutputBlock = DOM.vizCanvas.querySelector('.output-block');
+    const wasOutputExpanded = prevOutputBlock !== null && prevOutputBlock.classList.contains('expanded');
 
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
-    // Restore output expanded state after re-rendering
-    if (wasOutputExpanded) {
-        const newOutputBlock = DOM.vizCanvas.querySelector('.output-block');
-        if (newOutputBlock) {
-            newOutputBlock.classList.add('expanded');
-        }
-    }
-
-       // Attach click handlers for expandable nested values
+    // Attach click handlers for expandable nested values
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]');
     valueElements.forEach((el) => {
         el.addEventListener('click', () => {
@@ -384,15 +377,19 @@ function renderStep(stepIndex) {
         });
     });
 
-    // Output click-to-expand/collapse
+    // Output click-to-expand/collapse (synchronous overflow check, no setTimeout)
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
     if (outputBlock) {
-        // Check if content overflows after browser paints
-        setTimeout(() => {
-            if (outputBlock.scrollHeight > outputBlock.clientHeight + 5) {
-                outputBlock.classList.add('needs-expand');
-            }
-        }, 50);
+        // Reading scrollHeight forces synchronous reflow — no setTimeout needed
+        const overflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
+
+        if (overflows) {
+            outputBlock.classList.add('needs-expand');
+        }
+
+        if (wasOutputExpanded && overflows) {
+            outputBlock.classList.add('expanded');
+        }
 
         outputBlock.addEventListener('click', () => {
             outputBlock.classList.toggle('expanded');
