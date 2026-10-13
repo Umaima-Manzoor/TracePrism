@@ -131,6 +131,16 @@ function togglePlay() {
 // Run Trace button click
 DOM.btnTrace.addEventListener('click', runTrace);
 
+// Clear animation button click
+DOM.btnClear.addEventListener('click', () => {
+    pausePlayback();
+    AppState.snapshots = [];
+    AppState.totalSteps = 0;
+    AppState.currentStep = -1;
+    AppState.reconstructedLocals = [];
+    renderStep(-1);         // idle state
+});
+
 // Deck Navigation buttons
 DOM.btnFirst.addEventListener('click', () => { pausePlayback(); firstStep(); });
 DOM.btnPrev.addEventListener('click', () => { pausePlayback(); prevStep(); });

@@ -154,8 +154,30 @@ class Tracer:
         self._step_counter = 0
         self._call_stack = []
 
-        # check for blocked imports before doing anything else
+        # check for blocked imports AND syntax errors before execution
         import_error = self._check_blocked_imports(source_code)
+
+        try:
+            compiled_code = compile(source_code, '<traceprism>', 'exec')
+        except SyntaxError as e:
+            # combine syntax error with any import errors found
+            syntax_msg = f"SyntaxError on line {e.lineno}: {e.msg}"
+            if import_error:
+                combined_msg = f"{import_error['message']}\n{syntax_msg}"
+            else:
+                combined_msg = syntax_msg
+            return {
+                'snapshots': [],
+                'total_steps': 0,
+                'error': {
+                    'error_type': 'SyntaxError' if not import_error else 'ImportError + SyntaxError',
+                    'message': combined_msg,
+                    'line': e.lineno,
+                },
+                'output': '',
+            }
+
+        # if no syntax error but there are blocked imports, report them now
         if import_error:
             return {
                 'snapshots': [],
@@ -163,21 +185,7 @@ class Tracer:
                 'error': import_error,
                 'output': '',
             }
-
-        try:
-            compiled_code = compile(source_code, '<traceprism>', 'exec')
-        except SyntaxError as e:
-            return {
-                'snapshots': [],
-                'total_steps': 0,
-                'error': {
-                    'error_type': 'SyntaxError',
-                    'message': str(e.msg),
-                    'line': e.lineno,
-                },
-                'output': '',
-            }
-
+        
         safe_builtins = {
             k: v for k, v in __builtins__.items()
             if k not in self.BLOCKED_BUILTINS

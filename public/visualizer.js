@@ -75,11 +75,11 @@ const ERROR_SUGGESTIONS = {
     'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
 };
 
-// standalone error renderer - centered text on peach canvas, no cards
+// standalone error renderer - dark background, top-aligned, centered text
 function renderError(errorObj) {
     const errorType = errorObj.error_type || 'Error';
     const errorMsg = errorObj.message || 'An unknown error occurred.';
-    const suggestion = ERROR_SUGGESTIONS[errorType] || 'Review your code and try again.';
+    const suggestion = ERROR_SUGGESTIONS[errorType] || ERROR_SUGGESTIONS['default'] || 'Review your code and try again.';
 
     if (errorObj.line) {
         highlightLine(errorObj.line);
@@ -87,18 +87,23 @@ function renderError(errorObj) {
         highlightLine(null);
     }
 
-    DOM.vizCanvas.parentElement.classList.add('canvas-active');
+    DOM.vizCanvas.parentElement.classList.remove('canvas-active');
     DOM.stepIndicator.innerText = errorType.toUpperCase();
     DOM.vizMode.innerText = 'ERROR';
     DOM.stepCounter.innerText = '0 / 0';
     DOM.timelineSlider.value = 0;
     DOM.timelineSlider.max = 0;
 
+    const safeMsg = errorMsg
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
     DOM.vizCanvas.innerHTML = `
         <div class="error-display">
             <div class="error-display-heading">Execution Terminated</div>
             <div class="error-display-type">${errorType}</div>
-            <div class="error-display-message">${errorMsg}</div>
+            <div class="error-display-message">${safeMsg}</div>
             <div class="error-display-suggestion">${suggestion}</div>
         </div>
     `;
@@ -252,15 +257,16 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // exception section (centered display, no cards)
-    let errorHTML = '';
+    // exception section (replaces entire canvas with centered error display)
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const safeMsg = snapshot.exception.message
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const suggestion = ERROR_SUGGESTIONS[safeType] || 'Review your code and try again.';
-        errorHTML = `
+
+        DOM.vizCanvas.parentElement.classList.remove('canvas-active');      // remove peach bg so dark error bg shows
+        DOM.vizCanvas.innerHTML = `
             <div class="error-display">
                 <div class="error-display-heading">Execution Terminated</div>
                 <div class="error-display-type">${safeType}</div>
@@ -268,12 +274,12 @@ function renderStep(stepIndex) {
                 <div class="error-display-suggestion">${suggestion}</div>
             </div>
         `;
+        DOM.vizMode.innerText = 'EXCEPTION';
+        return;     // stop rendering, don't show vars/stack/output on top of error
     }
 
     // update status mode tag
-    if (snapshot.exception) {
-        DOM.vizMode.innerText = 'EXCEPTION';
-    } else if (varsHTML && stackHTML) {
+    if (varsHTML && stackHTML) {
         DOM.vizMode.innerText = 'VARS + STACK';
     } else if (stackHTML) {
         DOM.vizMode.innerText = 'CALL STACK';
@@ -285,7 +291,7 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
-    DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorHTML;
+    DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML;
 
     // attach click handlers for value expand/collapse
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
