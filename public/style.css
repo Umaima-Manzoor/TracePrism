@@ -513,14 +513,13 @@ html, body {
     background-color: var(--bg-pane);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 12px 14px 28px 14px;
+    padding: 12px 14px;
     font-family: var(--font-code);
     font-size: 13px;
     color: var(--text-main);
     width: 100%;
     max-height: 150px;
     overflow: hidden;
-    position: relative;
     cursor: pointer;
     transition: max-height 300ms var(--ease-out-soft);
 }
@@ -528,7 +527,6 @@ html, body {
 .output-block.expanded {
     max-height: 600px;
     overflow-y: auto;
-    padding-bottom: 14px;
 }
 
 .output-block pre {
@@ -537,29 +535,31 @@ html, body {
     word-break: break-word;
 }
 
-/* Expand/collapse hint at bottom of output box */
-.output-block.needs-expand::after {
-    content: '▼ click to expand';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 5px;
+/* Expand/collapse hint below output box */
+.output-hint {
+    display: none;
+    padding: 6px;
     text-align: center;
     font-family: var(--font-ui);
-    font-size: 10px;
-    font-weight: 700;
-    color: #5eead4;
-    background-color: #1e2028;
-    pointer-events: none;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    background-color: var(--bg-pane);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.output-block.needs-expand.expanded::after {
-    content: '▲ click to collapse';
-    position: sticky;
-    bottom: 0;
-    background-color: #1e2028;
-    border-top: 1px solid var(--border-color);
+.output-hint:hover {
+    background-color: var(--bg-element);
+    color: var(--text-main);
+}
+
+.output-hint.visible {
+    display: block;
 }
 
 /* error overlay: 25% semi-transparent dark layer with vertically centered card group */

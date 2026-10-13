@@ -377,22 +377,35 @@ function renderStep(stepIndex) {
         });
     });
 
-    // Output click-to-expand/collapse (synchronous overflow check, no setTimeout)
+    // Output click-to-expand/collapse
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
-    if (outputBlock) {
-        // Reading scrollHeight forces synchronous reflow — no setTimeout needed
+    const outputHint = DOM.vizCanvas.querySelector('.output-hint');
+
+    if (outputBlock && outputHint) {
         const overflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
 
         if (overflows) {
-            outputBlock.classList.add('needs-expand');
+            outputHint.classList.add('visible');
         }
 
         if (wasOutputExpanded && overflows) {
             outputBlock.classList.add('expanded');
+            outputHint.textContent = '▲ click to collapse';
         }
+
+        outputHint.addEventListener('click', (e) => {
+            e.stopPropagation();
+            outputBlock.classList.toggle('expanded');
+            outputHint.textContent = outputBlock.classList.contains('expanded')
+                ? '▲ click to collapse'
+                : '▼ click to expand';
+        });
 
         outputBlock.addEventListener('click', () => {
             outputBlock.classList.toggle('expanded');
+            outputHint.textContent = outputBlock.classList.contains('expanded')
+                ? '▲ click to collapse'
+                : '▼ click to expand';
         });
     }
 }
