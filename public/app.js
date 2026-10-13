@@ -125,14 +125,9 @@ AppState.editor.on('change', function(cm, changeObj) {
     }, 75);
 });
 
-// toggle editing highlight (blue bar) on focus/blur - animation highlight stays unaffected
-AppState.editor.on('blur', function() {
-    AppState.editor.setOption('styleActiveLine', false);    // hide blue editing bar
-});
-
-AppState.editor.on('focus', function() {
-    AppState.editor.setOption('styleActiveLine', true);     // show blue editing bar
-});
+AppState.editor.on('blur', updateEditingHighlightVisibility);
+AppState.editor.on('focus', updateEditingHighlightVisibility);
+AppState.editor.on('cursorActivity', updateEditingHighlightVisibility);     // re-check when cursor moves
 
 function highlightLine(lineNumber) {
     const cm = AppState.editor;
@@ -145,20 +140,28 @@ function highlightLine(lineNumber) {
 
     if (lineNumber === null || lineNumber <= 0) {
         AppState.highlightedLine = null;
-        cm.setOption('styleActiveLine', true);      // restore blue editing bar when trace ends
+        updateEditingHighlightVisibility();     // re-check if blue should show
         return;
     }
-
-    // animation highlight takes priority - hide blue editing bar during trace
-    cm.setOption('styleActiveLine', false);
 
     // CodeMirror lines are 0-indexed, our snapshots are 1-indexed
     const cmLine = lineNumber - 1;
     if (cmLine >= 0 && cmLine <= cm.lastLine()) {
         cm.addLineClass(cmLine, 'background', 'trace-highlight-line');
         AppState.highlightedLine = cmLine;
-        cm.scrollIntoView({ line: cmLine, ch: 0 }, 100);     // scroll highlighted line into view
+        cm.scrollIntoView({ line: cmLine, ch: 0 }, 100);
+        updateEditingHighlightVisibility();     // hide blue if it would collide with peach
     }
+}
+
+// hide blue editing bar when cursor is on the same line as peach execution bar
+function updateEditingHighlightVisibility() {
+    const cm = AppState.editor;
+    if (!cm) return;
+    const cursorLine = cm.getCursor().line;
+    const isColliding = AppState.highlightedLine !== null && cursorLine === AppState.highlightedLine;
+    const editorFocused = cm.hasFocus();        // if the user is in the editor
+    cm.setOption('styleActiveLine', editorFocused && !isColliding);
 }
 
 // dropdown state tracking
