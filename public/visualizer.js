@@ -126,7 +126,7 @@ function renderError(errorObj) {
     if (errorType.includes('+')) {
         const types = errorType.split('+').map(t => t.trim());
         const suggestions = types.map(t => ERROR_SUGGESTIONS[t]).filter(Boolean);   // removes undefined entries
-        suggestion = suggestions.length > 0 ? suggestions.join('\n') : 'Review your code and try again.';
+        suggestion = suggestions.length > 0 ? suggestions.join(' ') : 'Review your code and try again.';
     } else {
         suggestion = ERROR_SUGGESTIONS[errorType] || 'Review your code and try again.';
     }
