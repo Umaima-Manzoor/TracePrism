@@ -106,6 +106,7 @@ function initEditor() {
 }
 
 initEditor();       // create the editor on page load
+AppState.editor.setOption('styleActiveLine', false);     // hide blue bar until user clicks in
 
 // auto-show autocomplete suggestions as user types (75ms delay like VS Code)
 let autocompleteTimeout = null;
