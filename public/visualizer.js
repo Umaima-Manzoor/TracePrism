@@ -118,6 +118,7 @@ const ERROR_SUGGESTIONS = {
     'ExecutionError': 'Your code exceeded server limits. Check for infinite loops, extremely large computations, or excessive memory usage.',
 };
 
+// Persistent overflow state — survives across re-renders to prevent hint flicker
 let outputOverflows = false;
 
 // standalone error renderer - dark card on peach bg, vertically centered
@@ -395,7 +396,7 @@ function renderStep(stepIndex) {
 
         outputBlock.addEventListener('click', toggleOutput);
         outputHint.addEventListener('click', (e) => {
-            e.stopPropagation();
+            e.stopPropagation();        // prevents flickering
             toggleOutput();
         });
     } else if (outputBlock) {
