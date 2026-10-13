@@ -498,14 +498,24 @@ html, body {
 .var-row[data-type="set"] .var-type-tag { color: var(--type-dict); }
 .var-row[data-type="NoneType"] .var-type-tag { color: var(--type-none); }
 
-/* Compact Text Flash on Variable Change */
-@keyframes textGlowFlash {
-    0% { color: var(--text-on-peach); font-weight: 700; }
+/* Variable change flash - background tint + value color */
+@keyframes varRowFlash {
+    0% { background-color: rgba(94, 234, 212, 0.15); }
+    100% { background-color: transparent; }
+}
+
+@keyframes varValueFlash {
+    0% { color: var(--accent-cyan) !important; font-weight: 700; }
+    50% { color: var(--accent-cyan) !important; }
     100% { font-weight: 500; }
 }
 
+.var-row.chip-changed {
+    animation: varRowFlash 800ms var(--ease-out-soft);
+}
+
 .var-row.chip-changed .var-value {
-    animation: textGlowFlash 800ms var(--ease-out-soft);
+    animation: varValueFlash 1000ms var(--ease-out-soft);
 }
 
 /* program output section */

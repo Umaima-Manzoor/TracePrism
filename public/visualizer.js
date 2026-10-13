@@ -234,7 +234,7 @@ function renderStep(stepIndex) {
                 <div class="var-row${changeClass}" data-type="${type}">
                     <span class="var-type-tag">[${type}]</span>
                     <span class="var-name">${name}</span>
-                    <span class="var-equals">=</span>
+                    <span class="var-equals"> =</span>
                     <span class="var-value"${nestedAttr} title="Click to expand/collapse">${safeValue}</span>
                 </div>
             `;
@@ -359,6 +359,7 @@ function renderStep(stepIndex) {
     // Save expanded state BEFORE destroying DOM
     const prevBlock = DOM.vizCanvas.querySelector('.output-block');
     const wasExpanded = prevBlock !== null && prevBlock.classList.contains('expanded');
+    const prevScrollTop = prevBlock ? prevBlock.scrollTop : 0;
 
     // Inject HTML
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
@@ -386,6 +387,8 @@ function renderStep(stepIndex) {
         } else {
             outputBlock.classList.add('no-hint');
         }
+
+        outputBlock.scrollTop = prevScrollTop
 
         const toggleOutput = () => {
             outputBlock.classList.toggle('expanded');
