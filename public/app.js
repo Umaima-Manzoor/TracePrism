@@ -124,10 +124,19 @@ AppState.editor.on('change', function(cm, changeObj) {
     }, 75);
 });
 
-// clear line highlight when editor loses focus (no trace running)
+// clear line highlight when editor loses focus, restore when focused again
 AppState.editor.on('blur', function() {
-    if (AppState.totalSteps === 0) {
-        highlightLine(null);
+    if (AppState.highlightedLine !== null) {
+        AppState._savedHighlight = AppState.highlightedLine;     // remember which line was highlighted
+        highlightLine(null);                                     // clear highlight visually
+    }
+});
+
+AppState.editor.on('focus', function() {
+    if (AppState._savedHighlight !== null && AppState.totalSteps > 0) {
+        const cmLine = AppState._savedHighlight;
+        highlightLine(cmLine + 1);                               // restore highlight (+1 because highlightLine expects 1-indexed)
+        AppState._savedHighlight = null;
     }
 });
 

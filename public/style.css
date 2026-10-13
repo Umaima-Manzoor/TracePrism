@@ -177,9 +177,15 @@ html, body {
 }
 
 /* shortcuts button in topbar */
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .btn-shortcuts {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -187,8 +193,9 @@ html, body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     color: var(--text-muted);
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
+    flex-shrink: 0;
     transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
@@ -1017,14 +1024,12 @@ html, body {
     background-color: rgba(255, 215, 168, 0.06);
 }
 
-/* Trace execution line highlight (bright peach glow + left bracket) */
+/* Trace execution line highlight (solid dark bg + peach left bracket, matches pre-CodeMirror style) */
 #code-editor-container .trace-highlight-line {
-    background-color: rgba(255, 215, 168, 0.18) !important;
+    background-color: var(--bg-element) !important;
     border-left: 4px solid var(--accent-lime) !important;
-    border-top: 1px solid rgba(255, 215, 168, 0.12) !important;
-    border-bottom: 1px solid rgba(255, 215, 168, 0.12) !important;
-    margin-left: -4px;
-    padding-left: 4px;
+    margin-left: -4px !important;
+    padding-left: 4px !important;
 }
 
 /* Python syntax colors */
@@ -1143,7 +1148,7 @@ html, body {
     width: 12px;
     height: 12px;
     position: relative;
-    transition: transform var(--transition-fast);
+    transition: transform 400ms var(--ease-out-soft);
 }
 
 .close-x::before,
