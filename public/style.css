@@ -1019,17 +1019,21 @@ html, body {
     background-color: rgba(255, 215, 168, 0.2);
 }
 
-/* Active line (where cursor is) */
+/* Active line (where cursor is) - celadon border to distinguish from peach execution highlight */
 #code-editor-container .CodeMirror-activeline-background {
-    background-color: rgba(255, 215, 168, 0.06);
+    background-color: rgba(138, 168, 160, 0.06) !important;
+    border-left: 4px solid var(--accent-cyan) !important;
+    margin-left: -4px !important;
+    box-sizing: border-box !important;
 }
 
-/* Trace execution line highlight (solid dark bg + peach left bracket, matches pre-CodeMirror style) */
+/* Trace execution line highlight (exact match of old .line-highlight style) */
 #code-editor-container .trace-highlight-line {
     background-color: var(--bg-element) !important;
     border-left: 4px solid var(--accent-lime) !important;
     margin-left: -4px !important;
-    padding-left: 4px !important;
+    padding-left: 0 !important;
+    box-sizing: border-box !important;
 }
 
 /* Python syntax colors */
