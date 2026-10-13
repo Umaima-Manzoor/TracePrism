@@ -39,6 +39,48 @@ function formatVariableValue(value) {
     return String(value);
 }
 
+// pretty-print nested structures with indentation (shown on expand)
+function formatVariablePretty(value, indent) {
+    indent = indent || 0;
+    const pad = '    '.repeat(indent);
+    const padInner = '    '.repeat(indent + 1);
+
+    if (value === null || value === undefined) return 'None';
+    if (typeof value === 'boolean') return value ? 'True' : 'False';
+    if (typeof value === 'number' || typeof value === 'string') return formatVariableValue(value);
+
+    if (Array.isArray(value)) {
+        if (value.length === 0) return '[]';
+        const hasNested = value.some(v => Array.isArray(v) || (typeof v === 'object' && v !== null));
+        if (!hasNested && value.length <= 5) return formatVariableValue(value);
+        const items = value.map(v => padInner + formatVariablePretty(v, indent + 1));
+        return '[\n' + items.join(',\n') + '\n' + pad + ']';
+    }
+
+    if (typeof value === 'object') {
+        if (value.__type__ === 'tuple') {
+            const items = value.value;
+            if (items.length === 0) return '()';
+            const hasNested = items.some(v => Array.isArray(v) || (typeof v === 'object' && v !== null));
+            if (!hasNested && items.length <= 5) return formatVariableValue(value);
+            const formatted = items.map(v => padInner + formatVariablePretty(v, indent + 1));
+            return '(\n' + formatted.join(',\n') + (items.length === 1 ? ',' : '') + '\n' + pad + ')';
+        }
+        if (value.__type__ === 'set') {
+            const items = value.value;
+            if (items.length === 0) return 'set()';
+            const formatted = items.map(v => padInner + formatVariablePretty(v, indent + 1));
+            return '{\n' + formatted.join(',\n') + '\n' + pad + '}';
+        }
+        const entries = Object.entries(value);
+        if (entries.length === 0) return '{}';
+        const formatted = entries.map(([k, v]) => padInner + `"${k}": ${formatVariablePretty(v, indent + 1)}`);
+        return '{\n' + formatted.join(',\n') + '\n' + pad + '}';
+    }
+
+    return String(value);
+}
+
 // pre-compute all variable states once after API response (O(1) playback)
 function precomputeAllLocals() {
     AppState.reconstructedLocals = [];
@@ -75,11 +117,18 @@ const ERROR_SUGGESTIONS = {
     'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
 };
 
-// standalone error renderer - dark background, top-aligned, centered text
+// standalone error renderer - dark card on peach bg, vertically centered
 function renderError(errorObj) {
     const errorType = errorObj.error_type || 'Error';
     const errorMsg = errorObj.message || 'An unknown error occurred.';
     const suggestion = ERROR_SUGGESTIONS[errorType] || ERROR_SUGGESTIONS['default'] || 'Review your code and try again.';
+
+    // clear all stale state to prevent old animations from playing
+    pausePlayback();
+    AppState.snapshots = [];
+    AppState.totalSteps = 0;
+    AppState.currentStep = -1;
+    AppState.reconstructedLocals = [];
 
     if (errorObj.line) {
         highlightLine(errorObj.line);
@@ -87,7 +136,8 @@ function renderError(errorObj) {
         highlightLine(null);
     }
 
-    DOM.vizCanvas.parentElement.classList.remove('canvas-active');
+    // keep peach bg active, error card sits on top of it
+    DOM.vizCanvas.parentElement.classList.add('canvas-active');
     DOM.stepIndicator.innerText = errorType.toUpperCase();
     DOM.vizMode.innerText = 'ERROR';
     DOM.stepCounter.innerText = '0 / 0';
@@ -102,9 +152,11 @@ function renderError(errorObj) {
     DOM.vizCanvas.innerHTML = `
         <div class="error-display">
             <div class="error-display-heading">Execution Terminated</div>
-            <div class="error-display-type">${errorType}</div>
-            <div class="error-display-message">${safeMsg}</div>
-            <div class="error-display-suggestion">${suggestion}</div>
+            <div class="error-display-card">
+                <div class="error-display-type">${errorType}</div>
+                <div class="error-display-message">${safeMsg}</div>
+                <div class="error-display-suggestion">${suggestion}</div>
+            </div>
         </div>
     `;
 }
@@ -161,13 +213,18 @@ function renderStep(stepIndex) {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
 
+            const isNested = (type === 'list' || type === 'dict' || type === 'tuple' || type === 'set')
+                && (formattedValue.includes('[') || formattedValue.includes('{') || formattedValue.includes('('))
+                && formattedValue.length > 40;
+            const nestedAttr = isNested ? ' data-nested="true"' : '';
+
             rowsHTML += `
                 <div class="var-row${changeClass}" data-type="${type}">
                     <span class="var-name">${name}</span>
                     <span class="var-colon">:</span>
                     <span class="var-type">${type}</span>
                     <span class="var-equals">=</span>
-                    <span class="var-value" title="Click to expand/collapse">${safeValue}</span>
+                    <span class="var-value"${nestedAttr} title="Click to expand/collapse">${safeValue}</span>
                 </div>
             `;
         }
@@ -257,7 +314,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // exception section (replaces entire canvas with centered error display)
+    // exception section (replaces canvas with centered error card on peach bg)
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -265,17 +322,18 @@ function renderStep(stepIndex) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const suggestion = ERROR_SUGGESTIONS[safeType] || 'Review your code and try again.';
 
-        DOM.vizCanvas.parentElement.classList.remove('canvas-active');      // remove peach bg so dark error bg shows
         DOM.vizCanvas.innerHTML = `
             <div class="error-display">
                 <div class="error-display-heading">Execution Terminated</div>
-                <div class="error-display-type">${safeType}</div>
-                <div class="error-display-message">${safeMsg}</div>
-                <div class="error-display-suggestion">${suggestion}</div>
+                <div class="error-display-card">
+                    <div class="error-display-type">${safeType}</div>
+                    <div class="error-display-message">${safeMsg}</div>
+                    <div class="error-display-suggestion">${suggestion}</div>
+                </div>
             </div>
         `;
         DOM.vizMode.innerText = 'EXCEPTION';
-        return;     // stop rendering, don't show vars/stack/output on top of error
+        return;
     }
 
     // update status mode tag
@@ -295,9 +353,29 @@ function renderStep(stepIndex) {
 
     // attach click handlers for value expand/collapse
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
-    valueElements.forEach(el => {
+    valueElements.forEach((el, index) => {
         el.addEventListener('click', () => {
             el.classList.toggle('expanded');
+            // swap between compact and pretty format for nested structures
+            if (el.getAttribute('data-nested') === 'true') {
+                if (el.classList.contains('expanded')) {
+                    const varName = el.parentElement.querySelector('.var-name').textContent;
+                    const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
+                    if (rawValue !== undefined) {
+                        const pretty = formatVariablePretty(rawValue)
+                            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        el.innerHTML = pretty;
+                    }
+                } else {
+                    const varName = el.parentElement.querySelector('.var-name').textContent;
+                    const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
+                    if (rawValue !== undefined) {
+                        const compact = formatVariableValue(rawValue)
+                            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        el.textContent = compact;
+                    }
+                }
+            }
         });
     });
 }

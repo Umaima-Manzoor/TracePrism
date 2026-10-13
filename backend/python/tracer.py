@@ -20,32 +20,50 @@ class Tracer:
         self._stdout_buffer = None       # reference to active stdout buffer
         self._last_stdout_length = 0     # tracks how much output was captured before this step
 
-    def _check_blocked_imports(self, source_code):       # scan all imports before execution - parses the code into AST and walks every node looking for import statements
+    def _check_blocked_imports(self, source_code):       # scan all imports before execution
+        blocked = []
+
+        # try AST-based scan first (accurate with line numbers)
         try:
             tree = ast.parse(source_code)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        top_level = alias.name.split('.')[0]
+                        if top_level in self.BLOCKED_MODULES:
+                            blocked.append((alias.name, node.lineno))
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        top_level = node.module.split('.')[0]
+                        if top_level in self.BLOCKED_MODULES:
+                            blocked.append((node.module, node.lineno))
         except SyntaxError:
-            return None     # let compile() handle syntax errors later
-
-        blocked = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names:        # all modules in the import statement
-                    top_level = alias.name.split('.')[0]
+            # AST parsing failed due to syntax error, fall back to regex scan
+            import re
+            for match in re.finditer(r'^\s*(?:import\s+([\w.]+)|from\s+([\w.]+)\s+import)', source_code, re.MULTILINE):     # import x, from x import y
+                module_name = match.group(1) or match.group(2)
+                if module_name:
+                    top_level = module_name.split('.')[0]
                     if top_level in self.BLOCKED_MODULES:
-                        blocked.append(alias.name)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    top_level = node.module.split('.')[0]
-                    if top_level in self.BLOCKED_MODULES:
-                        blocked.append(node.module)
+                        line_no = source_code[:match.start()].count('\n') + 1       # count lines above for line no.
+                        blocked.append((module_name, line_no))
 
         if blocked:
-            unique_blocked = list(dict.fromkeys(blocked))     # removes duplicates
+            # remove duplicates while keeping order
+            seen = set()
+            unique_blocked = []
+            for name, line_no in blocked:
+                if name not in seen:
+                    seen.add(name)
+                    unique_blocked.append((name, line_no))
+
+            # format message with line numbers
+            details = ', '.join(f"'{name}' (line {line_no})" for name, line_no in unique_blocked)
             return {
                 'error': True,
                 'error_type': 'ImportError',
-                'message': f"The following modules are not allowed: {', '.join(unique_blocked)}",
-                'line': None,
+                'message': f"The following modules are not allowed: {details}",
+                'line': unique_blocked[0][1],
             }
         return None
 
@@ -160,24 +178,26 @@ class Tracer:
         try:
             compiled_code = compile(source_code, '<traceprism>', 'exec')
         except SyntaxError as e:
-            # combine syntax error with any import errors found
-            syntax_msg = f"SyntaxError on line {e.lineno}: {e.msg}"
+            syntax_msg = f"Line {e.lineno}: {e.msg}"
             if import_error:
                 combined_msg = f"{import_error['message']}\n{syntax_msg}"
+                error_type = 'ImportError + SyntaxError'
+                error_line = import_error['line']
             else:
                 combined_msg = syntax_msg
+                error_type = 'SyntaxError'
+                error_line = e.lineno
             return {
                 'snapshots': [],
                 'total_steps': 0,
                 'error': {
-                    'error_type': 'SyntaxError' if not import_error else 'ImportError + SyntaxError',
+                    'error_type': error_type,
                     'message': combined_msg,
-                    'line': e.lineno,
+                    'line': error_line,
                 },
                 'output': '',
             }
 
-        # if no syntax error but there are blocked imports, report them now
         if import_error:
             return {
                 'snapshots': [],
@@ -221,6 +241,12 @@ class Tracer:
             sys.stdout = captured_output      # redirect all print() to our buffer
             sys.settrace(self._trace_callback)
             exec(compiled_code, exec_globals)       # noqa: S102
+        except RecursionError:
+            error_info = {
+                'error_type': 'RecursionError',
+                'message': 'Maximum recursion depth exceeded.',
+                'line': None,
+            }
         except RuntimeError as e:
             error_info = {
                 'error_type': 'RuntimeError',

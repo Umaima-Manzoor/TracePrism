@@ -4,7 +4,10 @@ const API_BASE_URL = '';
 // API trigger (run trace via fetch) 
 async function runTrace() {
     const sourceCode = DOM.codeInput.value;
-    if (!sourceCode.trim()) return;
+    if (!sourceCode.trim()) {
+        renderStep(-1);       // show idle state when code is empty
+        return;
+    }
 
     // UI loading state and disabling button
     DOM.btnTrace.disabled = true;

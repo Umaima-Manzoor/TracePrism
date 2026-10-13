@@ -177,22 +177,22 @@ html, body {
 
 /* clear animation button in canvas header */
 .btn-clear {
-    font-family: var(--font-code);
-    font-size: 10px;
+    font-family: var(--font-ui);
+    font-size: 12px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--accent-lime);
     background-color: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 3px 10px;
+    border: 1px solid var(--accent-lime);
+    border-radius: var(--radius-md);
+    padding: 5px 14px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: color var(--transition-fast), border-color var(--transition-fast);
+    letter-spacing: 0.3px;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .btn-clear:hover {
-    color: var(--text-main);
-    border-color: var(--border-strong);
+    background-color: var(--accent-lime);
+    color: var(--bg-app);
 }
 
 /* code editor and line highlighting */
@@ -420,8 +420,23 @@ html, body {
 .var-value.expanded {
     white-space: pre-wrap;
     word-break: break-word;
-    max-height: 150px;
+    max-height: 200px;
     overflow-y: auto;
+}
+
+/* Nested structure compact indicator */
+.var-value[data-nested="true"] {
+    cursor: pointer;
+}
+
+.var-value[data-nested="true"]::after {
+    content: ' ⌄';
+    font-size: 10px;
+    color: var(--text-dim);
+}
+
+.var-value[data-nested="true"].expanded::after {
+    content: ' ⌃';
 }
 
 /* Type Specific Text Colors */
@@ -431,6 +446,8 @@ html, body {
 .var-row[data-type="bool"] .var-value { color: var(--type-bool); }
 .var-row[data-type="list"] .var-value { color: var(--type-list); }
 .var-row[data-type="dict"] .var-value { color: var(--type-dict); }
+.var-row[data-type="tuple"] .var-value { color: var(--type-list); }
+.var-row[data-type="set"] .var-value { color: var(--type-dict); }
 .var-row[data-type="NoneType"] .var-value { color: var(--type-none); }
 
 /* Compact Text Flash on Variable Change */
@@ -463,30 +480,42 @@ html, body {
     word-break: break-word;
 }
 
-/* unified error display (dark background, top-aligned heading) */
+/* error display: heading on peach bg, dark card centered vertically */
 .error-display {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     height: 100%;
     min-height: 300px;
-    text-align: center;
     padding: 32px 24px;
-    gap: 14px;
-    background-color: #1a1210;
-    border-radius: var(--radius-md);
+    gap: 24px;
+    position: relative;
 }
 
-.error-display-heading {                /* exectution terminated */
+.error-display-heading {                    /* execution terminated */
+    position: absolute;
+    top: 24px;
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 700;
-    color: #8a7560;
+    color: var(--text-on-peach-muted);
     text-transform: uppercase;
     letter-spacing: 2.5px;
-    margin-bottom: 8px;
+}
+
+.error-display-card {                   /* actual error msg */
+    background-color: #1a1210;
+    border-radius: var(--radius-md);
+    padding: 28px 32px;
+    text-align: center;
+    max-width: 520px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
 }
 
 .error-display-type {
@@ -502,7 +531,7 @@ html, body {
     font-size: 13px;
     font-weight: 400;
     color: #ede8df;
-    max-width: 500px;
+    max-width: 460px;
     line-height: 22px;
     white-space: pre-wrap;
 }
@@ -515,7 +544,7 @@ html, body {
     font-style: italic;
     max-width: 420px;
     line-height: 18px;
-    margin-top: 12px;
+    margin-top: 4px;
 }
 
 /*  CALL STACK (GROWS UPWARD, NEW FRAMES ON TOP) */
