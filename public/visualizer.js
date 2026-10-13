@@ -363,7 +363,7 @@ function renderStep(stepIndex) {
         }
     }
 
-    // Attach click handlers for expandable nested values
+       // Attach click handlers for expandable nested values
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]');
     valueElements.forEach((el) => {
         el.addEventListener('click', () => {
@@ -384,26 +384,20 @@ function renderStep(stepIndex) {
         });
     });
 
-    // Output expand/collapse toggle (external link below the box)
+    // Output click-to-expand/collapse
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
-    const outputToggle = DOM.vizCanvas.querySelector('.output-toggle');
-
-    if (outputBlock && outputToggle) {
+    if (outputBlock) {
         requestAnimationFrame(() => {
             if (outputBlock.scrollHeight > outputBlock.clientHeight) {
-                outputToggle.style.display = 'block';
+                outputBlock.classList.add('show-hint');
             }
             if (wasOutputExpanded) {
                 outputBlock.classList.add('expanded');
-                outputToggle.textContent = 'Show less ▲';
             }
         });
 
-        outputToggle.addEventListener('click', () => {
+        outputBlock.addEventListener('click', () => {
             outputBlock.classList.toggle('expanded');
-            outputToggle.textContent = outputBlock.classList.contains('expanded')
-                ? 'Show less ▲'
-                : 'Show more ▼';
         });
     }
 }

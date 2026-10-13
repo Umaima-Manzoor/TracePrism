@@ -520,6 +520,8 @@ html, body {
     width: 100%;
     max-height: 150px;
     overflow: hidden;
+    position: relative;
+    cursor: pointer;
     transition: max-height 300ms var(--ease-out-soft);
 }
 
@@ -534,22 +536,38 @@ html, body {
     word-break: break-word;
 }
 
-/* Show more/less toggle link below the output box */
-.output-toggle {
-    display: block;
+/* "click to expand" hint - only shown when content overflows */
+.output-block.show-hint:not(.expanded)::after {
+    content: 'click to expand';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px;
     text-align: center;
     font-family: var(--font-ui);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
-    color: var(--accent-cyan);
-    cursor: pointer;
-    padding: 6px 0;
-    transition: color var(--transition-fast);
-    user-select: none;
+    color: var(--text-muted);
+    background: linear-gradient(transparent 20%, var(--bg-pane) 70%);
+    pointer-events: none;
 }
 
-.output-toggle:hover {
-    color: var(--text-main);
+/* "click to collapse" hint - solid bar at bottom, not inline */
+.output-block.show-hint.expanded::after {
+    content: 'click to collapse';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 4px;
+    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background-color: var(--bg-pane-header);
+    pointer-events: none;
 }
 
 /* error overlay: 25% semi-transparent dark layer with vertically centered card group */
