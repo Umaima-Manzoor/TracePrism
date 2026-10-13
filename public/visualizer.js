@@ -315,7 +315,6 @@ function renderStep(stepIndex) {
             <div class="viz-section">
                 <div class="viz-section-label">Output</div>
                 <div class="${blockClass}"><pre>${safeOutput}</pre></div>
-                <div class="${hintClass}">${hintText}</div>
             </div>
         `;
     }
@@ -371,7 +370,7 @@ function renderStep(stepIndex) {
     }
 
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
-    
+
     // Attach click handlers for expandable nested values
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]');
     valueElements.forEach((el) => {
@@ -393,29 +392,16 @@ function renderStep(stepIndex) {
         });
     });
 
-        // Output click-to-expand/collapse
+    // Output click-to-expand/collapse
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
-    const outputHint = DOM.vizCanvas.querySelector('.output-hint');
-
-    if (outputBlock && outputHint) {
-        // Only show hint if content overflows (synchronous check)
+    if (outputBlock) {
         const overflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
-        if (overflows && !outputHint.classList.contains('visible')) {
-            outputHint.classList.add('visible');
+        if (overflows) {
+            outputBlock.classList.add('needs-expand');
         }
 
-        const toggleOutput = () => {
+        outputBlock.addEventListener('click', () => {
             outputBlock.classList.toggle('expanded');
-            outputHint.textContent = outputBlock.classList.contains('expanded')
-                ? '▲ click to collapse'
-                : '▼ click to expand';
-        };
-
-        outputHint.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleOutput();
         });
-
-        outputBlock.addEventListener('click', toggleOutput);
     }
 }
