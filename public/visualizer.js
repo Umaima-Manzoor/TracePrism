@@ -115,7 +115,7 @@ const ERROR_SUGGESTIONS = {
     'RecursionError': 'Maximum recursion depth exceeded. Check your base case in the recursive function.',
     'RuntimeError': 'Execution exceeded the time/step limit. Check for infinite loops.',
     'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
-    'TimeoutError': 'Your code took too long to execute. Check for infinite loops or extremely large computations.',
+    'ExecutionError': 'Your code exceeded server limits. Check for infinite loops, extremely large computations, or excessive memory usage.',
 };
 
 // standalone error renderer - dark card on peach bg, vertically centered
@@ -376,6 +376,13 @@ function renderStep(stepIndex) {
 
     const outputBlocks = DOM.vizCanvas.querySelectorAll('.output-block');
     outputBlocks.forEach((block) => {
+        // Only show expand hint if content actually overflows the collapsed height
+        requestAnimationFrame(() => {       // waits for browser to finish rendering the output block before checking height
+            if (block.scrollHeight > block.clientHeight) {
+                block.classList.add('show-expand-hint');
+            }
+        });
+
         block.addEventListener('click', () => {
             block.classList.toggle('expanded');
         });

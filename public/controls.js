@@ -27,8 +27,8 @@ async function runTrace() {
         if (!response.ok) {
             if (response.status === 500 || response.status === 504) {
                 renderError({
-                    error_type: 'TimeoutError',
-                    message: 'Execution took too long and was terminated by the server.',
+                    error_type: 'ExecutionError',
+                    message: 'Execution was terminated by the server. Your code may have exceeded time or memory limits.',
                 });
                 return;
             }
@@ -37,9 +37,9 @@ async function runTrace() {
 
         const data = await response.json();
 
-        // Handle any pre-execution error (syntax, import, runtime with no snapshots)
+        // Handle pre-execution errors (no snapshots at all)
         if (data.error && (!data.snapshots || data.snapshots.length === 0)) {
-            renderError(data.error);        // renders deep brown error card, no animation
+            renderError(data.error);
             return;
         }
 
@@ -52,9 +52,19 @@ async function runTrace() {
             return;
         }
 
-        precomputeAllLocals();                  // Pre-compute O(1) state array
+        // If there was an error during execution (e.g. step limit, timeout), inject it into the last snapshot so renderStep shows the error overlay
+        if (data.error && AppState.snapshots.length > 0) {
+            const lastSnap = AppState.snapshots[AppState.snapshots.length - 1];
+            if (!lastSnap.exception) {      // avoids overwriting exceptions
+                lastSnap.exception = {
+                    type: data.error.error_type || 'RuntimeError',
+                    message: data.error.message || 'Execution terminated.',
+                };
+            }
+        }
 
-        // Set up scrubber max and render first meaningful step
+        precomputeAllLocals();
+
         DOM.timelineSlider.max = AppState.totalSteps > 0 ? AppState.totalSteps - 1 : 0;
         renderStep(0);
 
