@@ -480,37 +480,35 @@ html, body {
     word-break: break-word;
 }
 
-/* error overlay: semi-transparent dark layer on top of animation */
+/* error overlay: 25% semi-transparent dark layer with vertically centered card group */
 .error-overlay {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(14, 15, 18, 0.25);     /* semi-transparent dark */
+    background-color: rgba(14, 15, 18, 0.25);     /* 25% opacity for maximum code visibility */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: center;                    /* centers the heading + card group vertically */
     z-index: 10;
     padding: 32px 24px;
-    gap: 24px;
+    gap: 12px;                                  /* compact gap between heading and card */
     border-radius: var(--radius-md);
 }
 
 .error-overlay-heading {
-    position: absolute;
-    top: 24px;
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 700;
-    color: #8a7560;
+    color: #ff9b9b;                             /* soft coral so it reads clearly over dimmed code */
     text-transform: uppercase;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
 }
 
 .error-overlay-card {
-    background-color: #1a1210;
+    background-color: #1a1210;                  /* solid dark brown card */
     border-radius: var(--radius-md);
     padding: 28px 32px;
     text-align: center;
@@ -520,6 +518,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     gap: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35); /* subtle elevation over the canvas */
 }
 
 .error-overlay-type {
@@ -551,29 +550,26 @@ html, body {
     margin-top: 4px;
 }
 
-/* standalone error display (for pre-execution errors, no animation behind) */
+/* standalone error display (pre-execution errors on peach canvas) */
 .error-display {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: center;                    /* centers heading + card vertically */
     width: 100%;
     height: 100%;
     min-height: 300px;
     padding: 32px 24px;
-    gap: 24px;
-    position: relative;
+    gap: 12px;
 }
 
 .error-display-heading {
-    position: absolute;
-    top: 24px;
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 700;
-    color: var(--text-on-peach-muted);
+    color: var(--text-on-peach-muted);          /* medium brown on peach */
     text-transform: uppercase;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
 }
 
 .error-display-card {
