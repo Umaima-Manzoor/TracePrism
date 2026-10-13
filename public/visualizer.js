@@ -121,7 +121,15 @@ const ERROR_SUGGESTIONS = {
 function renderError(errorObj) {
     const errorType = errorObj.error_type || 'Error';
     const errorMsg = errorObj.message || 'An unknown error occurred.';
-    const suggestion = ERROR_SUGGESTIONS[errorType] || ERROR_SUGGESTIONS['default'] || 'Review your code and try again.';
+    // handle combined error types (e.g. "ImportError + SyntaxError")
+    let suggestion = '';
+    if (errorType.includes('+')) {
+        const types = errorType.split('+').map(t => t.trim());
+        const suggestions = types.map(t => ERROR_SUGGESTIONS[t]).filter(Boolean);   // removes undefined entries
+        suggestion = suggestions.length > 0 ? suggestions.join('\n') : 'Review your code and try again.';
+    } else {
+        suggestion = ERROR_SUGGESTIONS[errorType] || 'Review your code and try again.';
+    }
 
     // clear all stale state to prevent old animations from playing
     pausePlayback();
@@ -155,8 +163,8 @@ function renderError(errorObj) {
             <div class="error-display-card">
                 <div class="error-display-type">${errorType}</div>
                 <div class="error-display-message">${safeMsg}</div>
-                <div class="error-display-suggestion">${suggestion}</div>
             </div>
+            <div class="error-display-suggestion">${suggestion}</div>
         </div>
     `;
 }
@@ -329,8 +337,8 @@ function renderStep(stepIndex) {
                 <div class="error-overlay-card">
                     <div class="error-overlay-type">${safeType}</div>
                     <div class="error-overlay-message">${safeMsg}</div>
-                    <div class="error-overlay-suggestion">${suggestion}</div>
                 </div>
+                <div class="error-overlay-suggestion">${suggestion}</div>
             </div>
         `;
         DOM.vizMode.innerText = 'EXCEPTION';

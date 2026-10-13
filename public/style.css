@@ -542,12 +542,12 @@ html, body {
 .error-overlay-suggestion {
     font-family: var(--font-ui);
     font-size: 12px;
-    font-weight: 400;
-    color: #8a7560;
+    font-weight: 500;
+    color: var(--text-on-peach);                /* Deep espresso brown */
     font-style: italic;
-    max-width: 420px;
+    max-width: 480px;
     line-height: 18px;
-    margin-top: 4px;
+    text-align: center;
 }
 
 /* standalone error display (pre-execution errors on peach canvas) */
@@ -606,12 +606,12 @@ html, body {
 .error-display-suggestion {
     font-family: var(--font-ui);
     font-size: 12px;
-    font-weight: 400;
-    color: #8a7560;
+    font-weight: 500;
+    color: var(--text-on-peach);                /* Deep espresso brown on peach */
     font-style: italic;
-    max-width: 420px;
+    max-width: 480px;
     line-height: 18px;
-    margin-top: 4px;
+    text-align: center;
 }
 
 /*  CALL STACK (GROWS UPWARD, NEW FRAMES ON TOP) */

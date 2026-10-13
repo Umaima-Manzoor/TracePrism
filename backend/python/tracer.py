@@ -241,22 +241,28 @@ class Tracer:
             sys.settrace(self._trace_callback)
             exec(compiled_code, exec_globals)       # noqa: S102
         except RecursionError:
+            import traceback as tb      # allows call stack inspection during exception
+            line_no = tb.extract_tb(sys.exc_info()[2])[-1].lineno if sys.exc_info()[2] else None        # takes traceback obj - converts into list of frames - takes the last frame (where error occurred) - and gets the line no from there
             error_info = {
                 'error_type': 'RecursionError',
                 'message': 'Maximum recursion depth exceeded.',
-                'line': None,
+                'line': line_no,
             }
         except RuntimeError as e:
+            import traceback as tb
+            line_no = tb.extract_tb(sys.exc_info()[2])[-1].lineno if sys.exc_info()[2] else None
             error_info = {
                 'error_type': 'RuntimeError',
                 'message': str(e),
-                'line': None,
+                'line': line_no,
             }
         except Exception as e:      # noqa: BLE001
+            import traceback as tb
+            line_no = tb.extract_tb(sys.exc_info()[2])[-1].lineno if sys.exc_info()[2] else None
             error_info = {
                 'error_type': type(e).__name__,
                 'message': str(e),
-                'line': None,
+                'line': line_no,
             }
         finally:
             sys.settrace(None)
