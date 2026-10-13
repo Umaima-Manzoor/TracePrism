@@ -142,7 +142,8 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 0 16px;
+    height: 40px;
     background-color: var(--bg-pane);
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
@@ -173,6 +174,28 @@ html, body {
     background-color: transparent;
     color: var(--accent-lime);
     border-color: var(--accent-lime);
+}
+
+/* shortcuts button in topbar */
+.btn-shortcuts {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-shortcuts:hover {
+    color: var(--text-main);
+    border-color: var(--accent-lime);
+    background-color: rgba(255, 215, 168, 0.08);
 }
 
 /* clear animation button in canvas header */
@@ -785,6 +808,7 @@ html, body {
 
 .btn-primary:hover {
     background-color: var(--accent-lime-dim);
+    transform: scale(1.03);
 }
 
 .btn-deck {
@@ -810,6 +834,7 @@ html, body {
     color: var(--text-main);
     border-color: var(--border-strong);
     background-color: var(--bg-element);
+    box-shadow: 0 0 8px rgba(255, 215, 168, 0.1);
 }
 
 .btn-deck-primary {
@@ -822,6 +847,7 @@ html, body {
 .btn-deck-primary:hover {
     background-color: var(--accent-lime);
     color: var(--bg-app);
+    box-shadow: 0 0 12px rgba(255, 215, 168, 0.2);
 }
 
 .scrubber-container {
@@ -991,13 +1017,14 @@ html, body {
     background-color: rgba(255, 215, 168, 0.06);
 }
 
-/* Trace execution line highlight (gold left bracket + bg) */
-/* Trace execution line highlight (light peach glow + gold left bracket) */
+/* Trace execution line highlight (bright peach glow + left bracket) */
 #code-editor-container .trace-highlight-line {
-    background-color: rgba(255, 215, 168, 0.10) !important;   /* Very light peach tint */
-    border-left: 3px solid var(--accent-lime) !important;       /* Solid peach left bracket */
-    margin-left: -3px;
-    padding-left: 3px;
+    background-color: rgba(255, 215, 168, 0.18) !important;
+    border-left: 4px solid var(--accent-lime) !important;
+    border-top: 1px solid rgba(255, 215, 168, 0.12) !important;
+    border-bottom: 1px solid rgba(255, 215, 168, 0.12) !important;
+    margin-left: -4px;
+    padding-left: 4px;
 }
 
 /* Python syntax colors */
@@ -1067,9 +1094,10 @@ html, body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 28px 32px;
-    max-width: 600px;
+    max-width: 800px;
     width: 92%;
-    max-height: 80vh;
+    min-height: 400px;
+    max-height: 90vh;
     overflow-y: auto;
     z-index: 1001;
 }
@@ -1089,7 +1117,6 @@ html, body {
 }
 
 .btn-close-shortcuts {
-    position: relative;
     width: 28px;
     height: 28px;
     background: none;
@@ -1108,7 +1135,7 @@ html, body {
 }
 
 .btn-close-shortcuts:active {
-    background-color: #a03030;
+    background-color: #8a3a35;
 }
 
 .close-x {
@@ -1116,6 +1143,7 @@ html, body {
     width: 12px;
     height: 12px;
     position: relative;
+    transition: transform var(--transition-fast);
 }
 
 .close-x::before,
@@ -1130,12 +1158,11 @@ html, body {
     transition: background-color var(--transition-fast);
 }
 
-.close-x::before {
-    transform: rotate(45deg);
-}
+.close-x::before { transform: rotate(45deg); }
+.close-x::after { transform: rotate(-45deg); }
 
-.close-x::after {
-    transform: rotate(-45deg);
+.btn-close-shortcuts:hover .close-x {
+    transform: rotate(90deg);
 }
 
 .btn-close-shortcuts:hover .close-x::before,
@@ -1158,11 +1185,10 @@ html, body {
     margin-top: 0;
 }
 
-/* Two-column layout for shortcuts (YouTube-style) */
 .shortcuts-modal-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px 32px;
+    gap: 8px 40px;
 }
 
 .shortcuts-column {
@@ -1185,9 +1211,15 @@ html, body {
     font-weight: 600;
     color: var(--text-main);
     background-color: var(--bg-element);
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
+    transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.shortcut-row:hover .shortcut-keys {
+    transform: scale(1.05);
+    background-color: var(--bg-element-hover);
 }
 
 .shortcut-desc {

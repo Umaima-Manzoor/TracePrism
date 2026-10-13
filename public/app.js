@@ -35,7 +35,8 @@ const DOM = {
     stepCounter: document.getElementById('step-counter'),   // metadata counter (e.g. 14 / 87)
     speedSelect: document.getElementById('speed-select'),   // speed dropdown picker
 
-    // Shortcuts Modal
+    // Shortcuts
+    btnShortcuts: document.getElementById('btn-shortcuts'),
     shortcutsModal: document.getElementById('shortcuts-modal'),
     btnCloseShortcuts: document.getElementById('btn-close-shortcuts'),
 };
@@ -80,7 +81,7 @@ function initEditor() {
                 cm.replaceRange('\n' + line, { line: cursor.line, ch: line.length });
                 cm.setCursor({ line: cursor.line + 1, ch: cursor.ch });
             },
-            'Ctrl-Shift-K': function(cm) {   // delete current line
+            'Alt-K': function(cm) {   // delete current line
                 const cursor = cm.getCursor();
                 const lastLine = cm.lastLine();
                 if (cursor.line === lastLine) {
@@ -106,24 +107,28 @@ function initEditor() {
 
 initEditor();       // create the editor on page load
 
-// auto-show autocomplete suggestions as user types (like VS Code)
+// auto-show autocomplete suggestions as user types (75ms delay like VS Code)
 let autocompleteTimeout = null;
 AppState.editor.on('change', function(cm, changeObj) {
-    // don't auto-trigger on deletions, pastes, or undo/redo
     if (changeObj.origin === '+delete' || changeObj.origin === 'paste' || changeObj.origin === 'undo' || changeObj.origin === 'redo') return;
-
     clearTimeout(autocompleteTimeout);
     autocompleteTimeout = setTimeout(function() {
         const cursor = cm.getCursor();
         const token = cm.getTokenAt(cursor);
-        // only auto-trigger if user typed at least 2 characters of a word - and only for letters and underscores
         if (token.string.length >= 2 && /^[a-zA-Z_]+$/.test(token.string)) {
             const matches = PYTHON_KEYWORDS.filter(kw => kw.startsWith(token.string) && kw !== token.string);
             if (matches.length > 0) {
                 cm.showHint({ completeSingle: false });
             }
         }
-    }, 300);     // 300ms delay so it doesn't fire on every single keystroke
+    }, 75);
+});
+
+// clear line highlight when editor loses focus (no trace running)
+AppState.editor.on('blur', function() {
+    if (AppState.totalSteps === 0) {
+        highlightLine(null);
+    }
 });
 
 function highlightLine(lineNumber) {
@@ -180,5 +185,6 @@ function closeShortcutsModal() {
     DOM.shortcutsModal.classList.add('hidden');
 }
 
+DOM.btnShortcuts.addEventListener('click', openShortcutsModal);
 DOM.btnCloseShortcuts.addEventListener('click', closeShortcutsModal);
 DOM.shortcutsModal.querySelector('.shortcuts-modal-backdrop').addEventListener('click', closeShortcutsModal);

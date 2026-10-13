@@ -33,6 +33,7 @@
                 <span class="brand-sub">Python Runtime Visualizer</span>
             </div>
             <div class="topbar-actions">
+                <button id="btn-shortcuts" class="btn-shortcuts" title="Keyboard Shortcuts (Ctrl+,)">⌨</button>
                 <button id="btn-trace" class="btn btn-primary">Run Trace</button>
             </div>
         </header>
@@ -74,7 +75,6 @@
                 <button id="btn-play" class="btn-deck btn-deck-primary" title="Play/Pause (Space)">PLAY</button>
                 <button id="btn-next" class="btn-deck" title="Next step (Right Arrow)">▶</button>
                 <button id="btn-last" class="btn-deck" title="Jump to end (End)">▶|</button>
-                <span class="kbd-hint" title="Ctrl+, to see all shortcuts">⌨</span>
             </div>
 
             <!-- Progress Scrubber -->
@@ -95,7 +95,7 @@
         </footer>
     </div>
 
-        <!-- Keyboard Shortcuts Modal (hidden by default, opened with Ctrl+,) -->
+    <!-- Keyboard Shortcuts Modal -->
     <div id="shortcuts-modal" class="shortcuts-modal hidden">
         <div class="shortcuts-modal-backdrop"></div>
         <div class="shortcuts-modal-content">
@@ -110,7 +110,7 @@
                     <div class="shortcut-group-label">Editor</div>
                     <div class="shortcut-row"><span class="shortcut-keys">Ctrl + /</span><span class="shortcut-desc">Toggle comment</span></div>
                     <div class="shortcut-row"><span class="shortcut-keys">Ctrl + Shift + D</span><span class="shortcut-desc">Duplicate line</span></div>
-                    <div class="shortcut-row"><span class="shortcut-keys">Ctrl + Shift + K</span><span class="shortcut-desc">Delete line</span></div>
+                    <div class="shortcut-row"><span class="shortcut-keys">Alt + K</span><span class="shortcut-desc">Delete line</span></div>
                     <div class="shortcut-row"><span class="shortcut-keys">Ctrl + Space</span><span class="shortcut-desc">Autocomplete</span></div>
                 </div>
                 <div class="shortcuts-column">
