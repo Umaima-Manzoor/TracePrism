@@ -542,6 +542,7 @@ html, body {
 /* Gradient hint bar below output box */
 .output-hint {
     display: none;
+    width: 100%;
     padding: 8px;
     text-align: center;
     font-family: var(--font-ui);
@@ -554,6 +555,7 @@ html, body {
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     cursor: pointer;
     user-select: none;
+    box-sizing: border-box;
     transition: color var(--transition-fast);
 }
 

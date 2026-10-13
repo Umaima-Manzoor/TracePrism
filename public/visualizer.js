@@ -118,6 +118,8 @@ const ERROR_SUGGESTIONS = {
     'ExecutionError': 'Your code exceeded server limits. Check for infinite loops, extremely large computations, or excessive memory usage.',
 };
 
+let outputOverflows = false;
+
 // standalone error renderer - dark card on peach bg, vertically centered
 function renderError(errorObj) {
     const errorType = errorObj.error_type || 'Error';
@@ -136,6 +138,7 @@ function renderError(errorObj) {
     AppState.totalSteps = 0;
     AppState.currentStep = -1;
     AppState.reconstructedLocals = [];
+    outputOverflows = false;
 
     if (errorObj.line) {
         highlightLine(errorObj.line);
@@ -173,6 +176,7 @@ function renderStep(stepIndex) {
     if (stepIndex < 0 || !AppState.snapshots || !AppState.snapshots[stepIndex]) {
         highlightLine(null);
         DOM.vizCanvas.parentElement.classList.remove('canvas-active');
+        outputOverflows = false;     // reset overflow state for new trace
         DOM.vizCanvas.innerHTML = `
             <div class="canvas-placeholder">
                 <span class="placeholder-title">No Active Execution</span>
@@ -354,35 +358,34 @@ function renderStep(stepIndex) {
     // Save expanded state BEFORE destroying DOM
     const prevBlock = DOM.vizCanvas.querySelector('.output-block');
     const wasExpanded = prevBlock !== null && prevBlock.classList.contains('expanded');
-    const prevHint = DOM.vizCanvas.querySelector('.output-hint');
-    const wasHintVisible = prevHint !== null && prevHint.classList.contains('visible');
 
     // Inject HTML
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
-    // Restore state and set up handlers AFTER injecting
+    // Restore state and set up handlers
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
     const outputHint = DOM.vizCanvas.querySelector('.output-hint');
 
     if (outputBlock && outputHint) {
-        // Check overflow synchronously
-        const overflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
+        // Only check overflow if we haven't already detected it
+        // Once overflow is detected, it stays true for the entire trace
+        if (!outputOverflows) {
+            // Temporarily collapse to measure true overflow
+            outputBlock.classList.remove('expanded');
+            outputOverflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
+        }
 
-        if (!overflows) {
-            // Content fits — hide hint, round the output block corners
-            outputBlock.classList.add('no-hint');
-        } else {
-            // Content overflows — show hint
+        if (outputOverflows) {
             outputHint.classList.add('visible');
 
-            // Restore expanded state if it was expanded before re-render
             if (wasExpanded) {
                 outputBlock.classList.add('expanded');
                 outputHint.textContent = '▲ click to collapse';
             }
+        } else {
+            outputBlock.classList.add('no-hint');
         }
 
-        // Single toggle handler on both elements
         const toggleOutput = () => {
             outputBlock.classList.toggle('expanded');
             outputHint.textContent = outputBlock.classList.contains('expanded')
@@ -396,7 +399,6 @@ function renderStep(stepIndex) {
             toggleOutput();
         });
     } else if (outputBlock) {
-        // No hint element (no output) — just round corners
         outputBlock.classList.add('no-hint');
     }
 }
