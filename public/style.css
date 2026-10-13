@@ -480,6 +480,17 @@ html, body {
 .var-row[data-type="set"] .var-value { color: var(--type-dict); }
 .var-row[data-type="NoneType"] .var-value { color: var(--type-none); }
 
+/* Type tag colors for [type] bracket labels */
+.var-row[data-type="int"] .var-type-tag { color: var(--type-int); }
+.var-row[data-type="float"] .var-type-tag { color: var(--type-float); }
+.var-row[data-type="str"] .var-type-tag { color: var(--type-str); }
+.var-row[data-type="bool"] .var-type-tag { color: var(--type-bool); }
+.var-row[data-type="list"] .var-type-tag { color: var(--type-list); }
+.var-row[data-type="dict"] .var-type-tag { color: var(--type-dict); }
+.var-row[data-type="tuple"] .var-type-tag { color: var(--type-list); }
+.var-row[data-type="set"] .var-type-tag { color: var(--type-dict); }
+.var-row[data-type="NoneType"] .var-type-tag { color: var(--type-none); }
+
 /* Compact Text Flash on Variable Change */
 @keyframes textGlowFlash {
     0% { color: var(--text-on-peach); font-weight: 700; }
@@ -508,6 +519,41 @@ html, body {
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* Output expanded state */
+.output-block {
+    cursor: pointer;
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+    transition: max-height 300ms var(--ease-out-soft);
+}
+
+.output-block.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+/* Fade hint at bottom when collapsed */
+.output-block:not(.expanded)::after {
+    content: 'click to expand';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-style: italic;
+    color: var(--text-dim);
+    background: linear-gradient(transparent, var(--bg-pane));
+    pointer-events: none;
+}
+
+.output-block.expanded::after {
+    content: 'click to collapse';
 }
 
 /* error overlay: 25% semi-transparent dark layer with vertically centered card group */
@@ -660,24 +706,37 @@ html, body {
     align-self: stretch;
 }
 
-/* External sliding arrow (bold, visible) */
+/* External sliding arrow */
 .stack-arrow {
     position: absolute;
     left: 0;
-    top: 6px;
-    font-family: var(--font-code);
-    font-size: 18px;
-    font-weight: 900;
-    color: var(--accent-coral);              /* Coral for strong visibility */
-    line-height: 20px;
+    top: 10px;
+    width: 20px;
+    height: 2px;
+    background-color: var(--accent-coral);
     transition: transform var(--transition-smooth);
-    text-shadow: 0 0 4px rgba(192, 122, 114, 0.3);
+}
+
+.stack-arrow::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 7px solid var(--accent-coral);
 }
 
 /* Light peach canvas: arrow uses deep brown */
 .canvas-pane.canvas-active .stack-arrow {
-    color: #8b2a1f;                          /* Deep brick red */
-    text-shadow: none;
+    background-color: #8b2a1f;
+}
+
+.canvas-pane.canvas-active .stack-arrow::after {
+    border-left-color: #8b2a1f;
 }
 
 /* Flush-Borders Stack Column (column-reverse: new frames push on TOP) */

@@ -25,6 +25,13 @@ async function runTrace() {
         });
 
         if (!response.ok) {
+            if (response.status === 500 || response.status === 504) {
+                renderError({
+                    error_type: 'TimeoutError',
+                    message: 'Execution took too long and was terminated by the server.',
+                });
+                return;
+            }
             throw new Error(`Server returned HTTP ${response.status}`);
         }
 

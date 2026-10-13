@@ -115,6 +115,7 @@ const ERROR_SUGGESTIONS = {
     'RecursionError': 'Maximum recursion depth exceeded. Check your base case in the recursive function.',
     'RuntimeError': 'Execution exceeded the time/step limit. Check for infinite loops.',
     'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
+    'TimeoutError': 'Your code took too long to execute. Check for infinite loops or extremely large computations.',
 };
 
 // standalone error renderer - dark card on peach bg, vertically centered
@@ -278,7 +279,7 @@ function renderStep(stepIndex) {
                 <div class="viz-section-label">Call Stack</div>
                 <div class="stack-wrapper">
                     <div class="stack-arrow-track">
-                        <div id="stack-arrow" class="stack-arrow">➤</div>
+                        <div id="stack-arrow" class="stack-arrow"></div>
                     </div>
                     <div class="stack-frames">
                         ${framesHTML}
