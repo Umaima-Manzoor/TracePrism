@@ -16,7 +16,6 @@ async function runTrace() {
 
     // Pause active playback if running
     pausePlayback();
-    const traceStartTime = Date.now()       // record when trace started
 
     try {           // sends HTTP POST request to Flask
         const response = await fetch(`${API_BASE_URL}/api/trace`, {
@@ -27,15 +26,10 @@ async function runTrace() {
 
         if (!response.ok) {
             if (response.status === 500 || response.status === 504) {
-                // Wait at least 5 seconds before showing error so user sees "Tracing..."
-                const elapsed = Date.now() - traceStartTime;
-                const remaining = Math.max(0, 5000 - elapsed);
-                setTimeout(() => {
-                    renderError({
-                        error_type: 'ExecutionError',
-                        message: 'Execution was terminated by the server. Your code may have exceeded time or memory limits.',
-                    });
-                }, remaining);
+                renderError({
+                    error_type: 'ExecutionError',
+                    message: 'Execution was terminated by the server. Your code may have exceeded time or memory limits.',
+                });
                 return;
             }
             throw new Error(`Server returned HTTP ${response.status}`);
