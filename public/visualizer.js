@@ -349,7 +349,20 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
+    // Save output expanded state before re-rendering
+    const wasOutputExpanded = DOM.vizCanvas.querySelector('.output-block.expanded') !== null;
+
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
+
+    // Restore output expanded state after re-rendering
+    if (wasOutputExpanded) {
+        const newOutputBlock = DOM.vizCanvas.querySelector('.output-block');
+        if (newOutputBlock) {
+            newOutputBlock.classList.add('expanded');
+        }
+    }
+
+    // Attach click handlers for expandable values & output
 
     // Attach click handlers for expandable values & output
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
