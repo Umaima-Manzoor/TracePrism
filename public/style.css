@@ -19,7 +19,7 @@
     /* Brand & Accent Colors */
     --accent-lime: #ffd7a8;                /* Soft Peach / Apricot */
     --accent-lime-dim: #e6b88e;            /* Muted Peach for hovers */
-    --accent-cyan: #8aa8a0;                /* Muted celadon */
+    --accent-cyan: #5eead4;                /* Vibrant teal */
     --accent-coral: #c07a72;               /* Muted clay */
 
     /* Data Type Colors (readable on both dark and peach) */
@@ -1019,21 +1019,25 @@ html, body {
     background-color: rgba(255, 215, 168, 0.2);
 }
 
-/* Active line (where cursor is) - celadon border to distinguish from peach execution highlight */
-#code-editor-container .CodeMirror-activeline-background {
-    background-color: rgba(138, 168, 160, 0.06) !important;
-    border-left: 4px solid var(--accent-cyan) !important;
-    margin-left: -4px !important;
-    box-sizing: border-box !important;
+/* Trace execution line highlight (bar sits on gutter outline) */
+#code-editor-container .CodeMirror-linebackground.trace-highlight-line {
+    /* left: -1px !important; */
+    background-color: var(--bg-element) !important;
+    border-left: 7px solid var(--accent-lime) !important;
+    border-radius: 3px !important;
 }
 
-/* Trace execution line highlight (exact match of old .line-highlight style) */
-#code-editor-container .trace-highlight-line {
-    background-color: var(--bg-element) !important;
-    border-left: 4px solid var(--accent-lime) !important;
-    margin-left: -4px !important;
-    padding-left: 0 !important;
-    box-sizing: border-box !important;
+/* Active line (where cursor is) - celadon bar on gutter outline */
+#code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background {
+    /* left: -1px !important; */
+    background-color: rgba(138, 168, 160, 0.06) !important;
+    border-left: 7px solid var(--accent-cyan) !important;
+    border-radius: 3px !important;
+}
+
+/* Space between gutter and code text (like VS Code) */
+#code-editor-container .CodeMirror-line {
+    padding-left: 15px !important;
 }
 
 /* Python syntax colors */
