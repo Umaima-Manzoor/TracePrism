@@ -115,10 +115,10 @@ AppState.editor.setOption('styleActiveLine', false);     // hide blue bar until 
 // auto-show autocomplete suggestions as user types (75ms delay like VS Code)
 let autocompleteTimeout = null;
 AppState.editor.on('change', function(cm, changeObj) {
-    // 1. Save current code to localStorage automatically
+    // Save current code to localStorage automatically
     localStorage.setItem('traceprism_code', cm.getValue());
 
-    // 2. Autocomplete suggestions logic
+    // Autocomplete suggestions logic
     if (changeObj.origin === '+delete' || changeObj.origin === 'paste' || changeObj.origin === 'undo' || changeObj.origin === 'redo') return;
     clearTimeout(autocompleteTimeout);
     autocompleteTimeout = setTimeout(function() {
