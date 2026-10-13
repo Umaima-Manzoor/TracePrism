@@ -58,8 +58,12 @@ const PYTHON_KEYWORDS = [
 
 // codemirror initialization
 function initEditor() {
+    // Read saved code from previous session, or fallback to default factorial
+    const savedCode = localStorage.getItem('traceprism_code');
+    const defaultCode = 'def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nresult = factorial(3)';
+
     AppState.editor = CodeMirror(DOM.editorContainer, {
-        value: 'def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nresult = factorial(3)',
+        value: savedCode !== null ? savedCode : defaultCode,
         mode: 'python',
         theme: 'traceprism',
         lineNumbers: true,
@@ -111,7 +115,23 @@ AppState.editor.setOption('styleActiveLine', false);     // hide blue bar until 
 // auto-show autocomplete suggestions as user types (75ms delay like VS Code)
 let autocompleteTimeout = null;
 AppState.editor.on('change', function(cm, changeObj) {
+    // 1. Save current code to localStorage automatically
+    localStorage.setItem('traceprism_code', cm.getValue());
+
+    // 2. Autocomplete suggestions logic
     if (changeObj.origin === '+delete' || changeObj.origin === 'paste' || changeObj.origin === 'undo' || changeObj.origin === 'redo') return;
+    clearTimeout(autocompleteTimeout);
+    autocompleteTimeout = setTimeout(function() {
+        const cursor = cm.getCursor();
+        const token = cm.getTokenAt(cursor);
+        if (token.string.length >= 2 && /^[a-zA-Z_]+$/.test(token.string)) {
+            const matches = PYTHON_KEYWORDS.filter(kw => kw.startsWith(token.string) && kw !== token.string);
+            if (matches.length > 0) {
+                cm.showHint({ completeSingle: false });
+            }
+        }
+    }, 75);
+});
     clearTimeout(autocompleteTimeout);
     autocompleteTimeout = setTimeout(function() {
         const cursor = cm.getCursor();
