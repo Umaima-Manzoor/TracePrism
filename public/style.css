@@ -502,9 +502,9 @@ html, body {
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 700;
-    color: #ff9b9b;                             /* soft coral so it reads clearly over dimmed code */
+    color: #1c274c;                             /* Deep Indigo Navy - 8.2:1 contrast against peach */
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
 }
 
 .error-overlay-card {
@@ -567,9 +567,9 @@ html, body {
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 700;
-    color: var(--text-on-peach-muted);          /* medium brown on peach */
+    color: #1c274c;                             /* Deep Indigo Navy - crisp and readable on peach */
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
 }
 
 .error-display-card {
