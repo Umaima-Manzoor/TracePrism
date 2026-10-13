@@ -536,9 +536,9 @@ html, body {
     word-break: break-word;
 }
 
-/* "click to expand" hint - only shown when content overflows */
+/* "click to expand" hint - solid bar, no gradient */
 .output-block.show-hint:not(.expanded)::after {
-    content: 'click to expand';
+    content: '▼ click to expand';
     position: absolute;
     bottom: 0;
     left: 0;
@@ -547,26 +547,27 @@ html, body {
     text-align: center;
     font-family: var(--font-ui);
     font-size: 10px;
-    font-weight: 500;
-    color: var(--text-muted);
-    background: linear-gradient(transparent 20%, var(--bg-pane) 70%);
+    font-weight: 600;
+    color: var(--accent-cyan);
+    background-color: var(--bg-pane);
+    border-top: 1px solid var(--border-color);
     pointer-events: none;
 }
 
-/* "click to collapse" hint - solid bar at bottom, not inline */
+/* "click to collapse" hint - same solid bar style */
 .output-block.show-hint.expanded::after {
-    content: 'click to collapse';
-    position: fixed;
+    content: '▲ click to collapse';
+    position: sticky;
     bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 4px;
+    display: block;
+    padding: 6px;
     text-align: center;
     font-family: var(--font-ui);
     font-size: 10px;
-    font-weight: 500;
-    color: var(--text-muted);
+    font-weight: 600;
+    color: var(--accent-cyan);
     background-color: var(--bg-pane-header);
+    border-top: 1px solid var(--border-color);
     pointer-events: none;
 }
 
