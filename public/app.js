@@ -1,29 +1,29 @@
 // global - single source of truth
 const AppState = {
     snapshots: [],              // holds the full array of execution snapshots from API
-    reconstructedLocals: [],    // pre-computed full variables for every step (O(1) lookup)    
+    reconstructedLocals: [],    // pre-computed full variables for every step (O(1) lookup)
     totalSteps: 0,              // cached count of snapshots
     currentStep: -1,            // index of currently displayed snapshot (-1 means idle)
     isPlaying: false,           // true if auto-play is currently running
     playbackIntervalId: null,   // stored interval ID so we can clear/pause playback
     playbackSpeed: 600,         // millisecond duration per auto-advance step
+    editor: null,               // CodeMirror editor instance
+    highlightedLine: null,      // currently highlighted line (0-indexed for CodeMirror)
 };
 
-// DOM cache - storing references to avoid repeated lookups 
+// DOM cache - storing references to avoid repeated lookups
 const DOM = {
     // Top Bar Elements
     btnTrace: document.getElementById('btn-trace'),         // Run Trace button
 
     // Editor Elements
-    codeInput: document.getElementById('code-input'),       // textarea for python code
-    lineNumbers: document.getElementById('line-numbers'),   // gutter containing line numbers
-    lineHighlight: document.getElementById('line-highlight'), // gliding overlay bar on current line
-    stepIndicator: document.getElementById('step-indicator'), // status tag at editor top
-    
+    editorContainer: document.getElementById('code-editor-container'),  // CodeMirror mounts here
+    stepIndicator: document.getElementById('step-indicator'),           // status tag at editor top
+
     // Canvas Elements
     vizCanvas: document.getElementById('viz-canvas'),       // animation/visualization side
     vizMode: document.getElementById('viz-mode'),           // status tag at canvas top
-    
+
     // Controls Bar Elements
     btnClear: document.getElementById('btn-clear'),         // clear animation button
     btnFirst: document.getElementById('btn-first'),         // home button
@@ -34,9 +34,102 @@ const DOM = {
     timelineSlider: document.getElementById('timeline-slider'), // progress bar range input
     stepCounter: document.getElementById('step-counter'),   // metadata counter (e.g. 14 / 87)
     speedSelect: document.getElementById('speed-select'),   // speed dropdown picker
+
+    // Shortcuts Modal
+    shortcutsModal: document.getElementById('shortcuts-modal'),
+    btnCloseShortcuts: document.getElementById('btn-close-shortcuts'),
 };
 
-// Dropdown State Tracking: Fixes native browser focus trap
+// python keywords for auto-complete - codemirror doesn't include a list for python
+const PYTHON_KEYWORDS = [
+    'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
+    'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
+    'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
+    'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return',
+    'try', 'while', 'with', 'yield', 'print', 'range', 'len', 'int',
+    'str', 'float', 'bool', 'list', 'dict', 'tuple', 'set', 'type',
+    'input', 'map', 'filter', 'zip', 'enumerate', 'sorted', 'reversed',
+    'min', 'max', 'sum', 'abs', 'round', 'isinstance', 'append',
+    'extend', 'insert', 'remove', 'pop', 'index', 'count', 'sort',
+    'keys', 'values', 'items', 'get', 'update', 'split', 'join',
+    'strip', 'replace', 'find', 'format', 'upper', 'lower',
+];
+
+// codemirror initialization
+function initEditor() {
+    AppState.editor = CodeMirror(DOM.editorContainer, {
+        value: 'def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nresult = factorial(3)',
+        mode: 'python',
+        theme: 'traceprism',
+        lineNumbers: true,
+        lineWrapping: false,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        styleActiveLine: true,
+        gutters: ['CodeMirror-linenumbers'],
+        extraKeys: {
+            'Ctrl-/': 'toggleComment',       // toggle # comment on selected lines
+            'Cmd-/': 'toggleComment',        // same for Mac
+            'Ctrl-Space': 'autocomplete',    // trigger keyword autocomplete
+            'Ctrl-D': function(cm) {         // duplicate current line
+                const cursor = cm.getCursor();
+                const line = cm.getLine(cursor.line);
+                cm.replaceRange('\n' + line, { line: cursor.line, ch: line.length });
+                cm.setCursor({ line: cursor.line + 1, ch: cursor.ch });
+            },
+            'Ctrl-Shift-K': function(cm) {   // delete current line
+                const cursor = cm.getCursor();
+                const lastLine = cm.lastLine();
+                if (cursor.line === lastLine) {
+                    cm.replaceRange('', { line: cursor.line - 1, ch: cm.getLine(cursor.line - 1).length }, { line: cursor.line, ch: cm.getLine(cursor.line).length });
+                } else {        // deletes line upward if on the last line
+                    cm.replaceRange('', { line: cursor.line, ch: 0 }, { line: cursor.line + 1, ch: 0 });
+                }
+            },
+        },
+        hintOptions: {
+            hint: function(cm) {             // custom autocomplete from PYTHON_KEYWORDS
+                const cursor = cm.getCursor();
+                const token = cm.getTokenAt(cursor);
+                const start = token.start;
+                const end = cursor.ch;
+                const word = token.string;
+                const list = PYTHON_KEYWORDS.filter(kw => kw.startsWith(word) && kw !== word);
+                return { list: list, from: CodeMirror.Pos(cursor.line, start), to: CodeMirror.Pos(cursor.line, end) };
+            }
+        },
+    });
+}
+
+initEditor();       // create the editor on page load
+
+function highlightLine(lineNumber) {
+    const cm = AppState.editor;
+    if (!cm) return;
+
+    // clear previous highlight
+    if (AppState.highlightedLine !== null) {
+        cm.removeLineClass(AppState.highlightedLine, 'background', 'trace-highlight-line');
+    }
+
+    if (lineNumber === null || lineNumber <= 0) {
+        AppState.highlightedLine = null;
+        return;
+    }
+
+    // CodeMirror lines are 0-indexed, our snapshots are 1-indexed
+    const cmLine = lineNumber - 1;
+    if (cmLine >= 0 && cmLine <= cm.lastLine()) {
+        cm.addLineClass(cmLine, 'background', 'trace-highlight-line');
+        AppState.highlightedLine = cmLine;
+        cm.scrollIntoView({ line: cmLine, ch: 0 }, 100);     // scroll highlighted line into view
+    }
+}
+
+// dropdown state tracking
 let isDropdownOpen = false;
 
 DOM.speedSelect.addEventListener('mousedown', (e) => {
@@ -58,59 +151,14 @@ DOM.speedSelect.addEventListener('blur', () => {
     isDropdownOpen = false;             // Resets state if user clicks outside to close
 });
 
-// line numbers
-function updateLineNumbers() {          // reads current text -> calculates lines
-    const code = DOM.codeInput.value;
-    const lineCount = code.split('\n').length;
-    let numbersString = '';
-
-    for (let i = 1; i <= lineCount; i++) {
-        numbersString += i + '\n';
-    }
-
-    DOM.lineNumbers.innerText = numbersString;
+//shortcuts modal
+function openShortcutsModal() {
+    DOM.shortcutsModal.classList.remove('hidden');
 }
 
-//scroll sync
-function syncGutterScroll() {
-    DOM.lineNumbers.scrollTop = DOM.codeInput.scrollTop;
+function closeShortcutsModal() {
+    DOM.shortcutsModal.classList.add('hidden');
 }
 
-DOM.codeInput.addEventListener('input', updateLineNumbers);     // on every text change
-DOM.codeInput.addEventListener('scroll', syncGutterScroll);
-
-updateLineNumbers();        // for the placeholder code
-
-// active line highlighting
-let currentHighlightedLine = null;
-
-function highlightLine(lineNumber, isScrollEvent = false) {     //flag to identify source of trigger
-    currentHighlightedLine = lineNumber;
-
-    if (!lineNumber || lineNumber <= 0) {
-        DOM.lineHighlight.style.display = 'none';
-        return;
-    }
-
-    const lineHeight = 24;       // matches --line-height-code in style.css
-    const paddingTop = 14;        // matches editor-container padding-top in style.css
-    const scrollOffset = DOM.codeInput.scrollTop;
-    const topPosition = paddingTop + (lineNumber - 1) * lineHeight - scrollOffset;
-
-    // Toggle transition based on trigger to prevent scrolling delay
-    if (isScrollEvent) {
-        DOM.lineHighlight.style.transition = 'none';            // disable gliding transition during scrolls
-    } else {
-        DOM.lineHighlight.style.transition = 'top 120ms cubic-bezier(0.22, 1, 0.36, 1)';  // restore spring glide on steps
-}
-
-    DOM.lineHighlight.style.display = 'block';
-    DOM.lineHighlight.style.top = topPosition + 'px';
-}
-
-// Keep highlight aligned when scrolling
-DOM.codeInput.addEventListener('scroll', () => {
-    if (currentHighlightedLine) {
-        highlightLine(currentHighlightedLine, true);            // pass true to instantly lock coordinate on scroll
-    }
-});
+DOM.btnCloseShortcuts.addEventListener('click', closeShortcutsModal);
+DOM.shortcutsModal.querySelector('.shortcuts-modal-backdrop').addEventListener('click', closeShortcutsModal);

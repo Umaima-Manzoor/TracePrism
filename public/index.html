@@ -10,6 +10,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">     <!-- show text using default system font then swap to custom font once it loads -->
     
+    <!-- CodeMirror 5 Editor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">   <!-- autocomplete dropdown -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>     <!-- syntax highlighting-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>      <!-- ctrl+/ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>       <!-- highlights matching brackets when the cursor is next to one-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>       <!-- auto-inserting closing brackets-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>        <!-- current line highlight-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>           <!-- autocomplete popup triggered by ctrl+space -->
+
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -35,17 +46,8 @@
                     <span id="step-indicator" class="status-tag">READY</span>
                 </div>
                 <div class="editor-container">
-                    <!-- Line Numbers Gutter -->
-                    <div id="line-numbers" class="line-numbers">1</div>
-                    <!-- Code Textarea -->
-                    <textarea id="code-input" class="code-editor" spellcheck="false">def factorial(n):
-    if n <= 1:
-        return 1
-    return n * factorial(n - 1)
-
-result = factorial(3)</textarea>
-                    <!-- Visual Line Highlight Overlay -->
-                    <div id="line-highlight" class="line-highlight"></div>
+                    <!-- CodeMirror editor mounts inside this div (replaces old textarea) -->
+                    <div id="code-editor-container"></div>
                 </div>
             </section>
 
@@ -66,20 +68,13 @@ result = factorial(3)</textarea>
 
         <!-- Bottom Playback Deck -->
         <footer class="playback-deck">
-            <!-- <div class="playback-controls">
-                <button id="btn-first" class="btn-deck" title="Jump to start (Home)">|◀</button>
-                <button id="btn-prev" class="btn-deck" title="Previous step (Left Arrow)">◀</button>
-                <button id="btn-play" class="btn-deck btn-deck-primary" title="Play/Pause (Space)">PLAY</button>
-                <button id="btn-next" class="btn-deck" title="Next step (Right Arrow)">▶</button>
-                <button id="btn-last" class="btn-deck" title="Jump to end (End)">▶|</button>
-            </div> -->
             <div class="playback-controls">
                 <button id="btn-first" class="btn-deck" title="Jump to start (Home)">|◀</button>
                 <button id="btn-prev" class="btn-deck" title="Previous step (Left Arrow)">◀</button>
                 <button id="btn-play" class="btn-deck btn-deck-primary" title="Play/Pause (Space)">PLAY</button>
                 <button id="btn-next" class="btn-deck" title="Next step (Right Arrow)">▶</button>
                 <button id="btn-last" class="btn-deck" title="Jump to end (End)">▶|</button>
-                <span class="kbd-hint" title="Ctrl+Enter to trace | Arrow keys to step | Space to play">⌨</span>
+                <span class="kbd-hint" title="Ctrl+, to see all shortcuts">⌨</span>
             </div>
 
             <!-- Progress Scrubber -->
@@ -98,6 +93,34 @@ result = factorial(3)</textarea>
                 </select>
             </div>
         </footer>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal (hidden by default, opened with Ctrl+,) -->
+    <div id="shortcuts-modal" class="shortcuts-modal hidden">
+        <div class="shortcuts-modal-backdrop"></div>
+        <div class="shortcuts-modal-content">
+            <div class="shortcuts-modal-header">
+                <span class="shortcuts-modal-title">Keyboard Shortcuts</span>
+                <button id="btn-close-shortcuts" class="btn-close-shortcuts">✕</button>
+            </div>
+            <div class="shortcuts-modal-body">
+                <div class="shortcut-group-label">Editor</div>
+                <div class="shortcut-row"><span class="shortcut-keys">Ctrl + /</span><span class="shortcut-desc">Toggle comment</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">Ctrl + D</span><span class="shortcut-desc">Duplicate line</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">Ctrl + Shift + K</span><span class="shortcut-desc">Delete line</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">Ctrl + Space</span><span class="shortcut-desc">Autocomplete</span></div>
+                <div class="shortcut-group-label">Playback</div>
+                <div class="shortcut-row"><span class="shortcut-keys">Ctrl + Enter</span><span class="shortcut-desc">Run trace</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">→</span><span class="shortcut-desc">Next step</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">←</span><span class="shortcut-desc">Previous step</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">Space</span><span class="shortcut-desc">Play / Pause</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">Home</span><span class="shortcut-desc">Jump to first step</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">End</span><span class="shortcut-desc">Jump to last step</span></div>
+                <div class="shortcut-group-label">General</div>
+                <div class="shortcut-row"><span class="shortcut-keys">Ctrl + ,</span><span class="shortcut-desc">Open this panel</span></div>
+                <div class="shortcut-row"><span class="shortcut-keys">Esc</span><span class="shortcut-desc">Close this panel</span></div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

@@ -1,9 +1,9 @@
 // API endpoint configuration (local Flask backend)
 const API_BASE_URL = '';
 
-// API trigger (run trace via fetch) 
+// API trigger (run trace via fetch)
 async function runTrace() {
-    const sourceCode = DOM.codeInput.value;
+    const sourceCode = AppState.editor ? AppState.editor.getValue() : '';
     if (!sourceCode.trim()) {
         renderStep(-1);       // show idle state when code is empty
         return;
@@ -18,7 +18,7 @@ async function runTrace() {
     pausePlayback();
 
     try {           // sends HTTP POST request to Flask
-        const response = await fetch(`${API_BASE_URL}/api/trace`, {     
+        const response = await fetch(`${API_BASE_URL}/api/trace`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: sourceCode, language: 'python' })
@@ -171,13 +171,27 @@ DOM.speedSelect.addEventListener('change', (e) => {
 window.addEventListener('keydown', (e) => {
     // Ctrl+Enter or Cmd+Enter to run trace from anywhere
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();     // some browsers have default behaviours like submitting forms, etc.
+        e.preventDefault();
         runTrace();
         return;
     }
 
-    // Do not trigger playback shortcuts if user is typing code
-    if (document.activeElement === DOM.codeInput) {
+    // Ctrl+, to open shortcuts modal
+    if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault();
+        openShortcutsModal();
+        return;
+    }
+
+    // Esc to close modal
+    if (e.key === 'Escape') {
+        closeShortcutsModal();
+        return;
+    }
+
+    // Do not trigger playback shortcuts if user is typing in the CodeMirror editor
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.closest('.CodeMirror')) {
         return;
     }
 
