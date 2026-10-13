@@ -5,4 +5,4 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
 # dirname twice = two directories to go in
 # intert(0,..) = adds the root to python module search path
 
-from backend.app import app
+from backend.app import app  # noqa: F401  required by Vercel serverless runtime

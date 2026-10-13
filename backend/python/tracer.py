@@ -1,9 +1,9 @@
-import ast              # for scanning blocked imports before execution
-import copy             # for deepcopy
-import io               # for capturing print() output
-import logging          # for proper logger (not root logger)
-import sys              # for sys.settrace
-from typing import ClassVar     # for marking class-level constants
+import ast  # for scanning blocked imports before execution
+import copy  # for deepcopy
+import io  # for capturing print() output
+import logging  # for proper logger (not root logger)
+import sys  # for sys.settrace
+from typing import ClassVar  # for marking class-level constants
 
 logger = logging.getLogger(__name__)        # proper named logger instead of root
 
@@ -32,11 +32,10 @@ class Tracer:
                         top_level = alias.name.split('.')[0]
                         if top_level in self.BLOCKED_MODULES:
                             blocked.append((alias.name, node.lineno))
-                elif isinstance(node, ast.ImportFrom):
-                    if node.module:
-                        top_level = node.module.split('.')[0]
-                        if top_level in self.BLOCKED_MODULES:
-                            blocked.append((node.module, node.lineno))
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    top_level = node.module.split('.')[0]
+                    if top_level in self.BLOCKED_MODULES:
+                        blocked.append((node.module, node.lineno))
         except SyntaxError:
             # AST parsing failed due to syntax error, fall back to regex scan
             import re
