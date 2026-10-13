@@ -1,8 +1,9 @@
-import copy  # for deepcopy
-import io  # for capturing print() output
-import logging  # for proper logger (not root logger)
-import sys  # for sys.settrace
-from typing import ClassVar  # for marking class-level constants
+import ast              # for scanning blocked imports before execution
+import copy             # for deepcopy
+import io               # for capturing print() output
+import logging          # for proper logger (not root logger)
+import sys              # for sys.settrace
+from typing import ClassVar     # for marking class-level constants
 
 logger = logging.getLogger(__name__)        # proper named logger instead of root
 
@@ -18,6 +19,35 @@ class Tracer:
         self._call_stack = []
         self._stdout_buffer = None       # reference to active stdout buffer
         self._last_stdout_length = 0     # tracks how much output was captured before this step
+
+    def _check_blocked_imports(self, source_code):       # scan all imports before execution - parses the code into AST and walks every node looking for import statements
+        try:
+            tree = ast.parse(source_code)
+        except SyntaxError:
+            return None     # let compile() handle syntax errors later
+
+        blocked = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:        # all modules in the import statement
+                    top_level = alias.name.split('.')[0]
+                    if top_level in self.BLOCKED_MODULES:
+                        blocked.append(alias.name)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    top_level = node.module.split('.')[0]
+                    if top_level in self.BLOCKED_MODULES:
+                        blocked.append(node.module)
+
+        if blocked:
+            unique_blocked = list(dict.fromkeys(blocked))     # removes duplicates
+            return {
+                'error': True,
+                'error_type': 'ImportError',
+                'message': f"The following modules are not allowed: {', '.join(unique_blocked)}",
+                'line': None,
+            }
+        return None
 
     def _trace_callback(self, frame, event, arg):
         code_filename = frame.f_code.co_filename
@@ -124,14 +154,28 @@ class Tracer:
         self._step_counter = 0
         self._call_stack = []
 
+        # check for blocked imports before doing anything else
+        import_error = self._check_blocked_imports(source_code)
+        if import_error:
+            return {
+                'snapshots': [],
+                'total_steps': 0,
+                'error': import_error,
+                'output': '',
+            }
+
         try:
             compiled_code = compile(source_code, '<traceprism>', 'exec')
         except SyntaxError as e:
             return {
-                'error': True,
-                'error_type': 'SyntaxError',
-                'message': str(e),
-                'line': e.lineno,
+                'snapshots': [],
+                'total_steps': 0,
+                'error': {
+                    'error_type': 'SyntaxError',
+                    'message': str(e.msg),
+                    'line': e.lineno,
+                },
+                'output': '',
             }
 
         safe_builtins = {
@@ -168,18 +212,18 @@ class Tracer:
         try:
             sys.stdout = captured_output      # redirect all print() to our buffer
             sys.settrace(self._trace_callback)
-            exec(compiled_code, exec_globals)       # noqa: S102   intentional sandboxed execution of user code
+            exec(compiled_code, exec_globals)       # noqa: S102
         except RuntimeError as e:
             error_info = {
-                'error': True,
                 'error_type': 'RuntimeError',
                 'message': str(e),
+                'line': None,
             }
-        except Exception as e:      # noqa: BLE001   intentional broad catch for arbitrary user-code errors
+        except Exception as e:      # noqa: BLE001
             error_info = {
-                'error': True,
                 'error_type': type(e).__name__,
                 'message': str(e),
+                'line': None,
             }
         finally:
             sys.settrace(None)

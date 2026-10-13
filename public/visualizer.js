@@ -59,19 +59,35 @@ function precomputeAllLocals() {
     }
 }
 
-// standalone error renderer - renders high-contrast deep brown error card immediately
-function renderError(errorObj) {    
-    const errorType = errorObj.error_type || errorObj.type || 'Error';          // synatx/import - runtime errors - fallback
-    const errorMsg = errorObj.message || 'An error occurred during execution.';
-    const errorLine = errorObj.line ? `Line ${errorObj.line}` : 'Pre-execution';
+// suggestion dictionary for common python errors
+const ERROR_SUGGESTIONS = {
+    'SyntaxError': 'Check for missing colons, parentheses, quotes, or indentation errors.',
+    'ImportError': 'TracePrism blocks system modules for security. Use only standard algorithm libraries like math or random.',
+    'NameError': 'Check if the variable or function name is spelled correctly and defined before use.',
+    'TypeError': 'Check that you are using the correct data types in your operation.',
+    'ValueError': 'Check that the value you are passing is valid for this operation.',
+    'ZeroDivisionError': 'You are dividing by zero. Check the denominator value before dividing.',
+    'IndexError': 'The index is out of range. Check the length of your list or string.',
+    'KeyError': 'The key does not exist in the dictionary. Check your dictionary keys.',
+    'AttributeError': 'The object does not have this attribute or method. Check the object type.',
+    'RecursionError': 'Maximum recursion depth exceeded. Check your base case in the recursive function.',
+    'RuntimeError': 'Execution exceeded the step limit. Check for infinite loops.',
+    'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
+};
+
+// standalone error renderer - centered text on peach canvas, no cards
+function renderError(errorObj) {
+    const errorType = errorObj.error_type || 'Error';
+    const errorMsg = errorObj.message || 'An unknown error occurred.';
+    const suggestion = ERROR_SUGGESTIONS[errorType] || 'Review your code and try again.';
 
     if (errorObj.line) {
-        highlightLine(errorObj.line);       // highlight the failing line in editor
+        highlightLine(errorObj.line);
     } else {
-        highlightLine(null);                // hide highlight for pre-execution errors
+        highlightLine(null);
     }
 
-    DOM.vizCanvas.parentElement.classList.add('canvas-active');     // activate peach bg
+    DOM.vizCanvas.parentElement.classList.add('canvas-active');
     DOM.stepIndicator.innerText = errorType.toUpperCase();
     DOM.vizMode.innerText = 'ERROR';
     DOM.stepCounter.innerText = '0 / 0';
@@ -79,15 +95,11 @@ function renderError(errorObj) {
     DOM.timelineSlider.max = 0;
 
     DOM.vizCanvas.innerHTML = `
-        <div class="viz-section" style="width: 100%;">
-            <div class="viz-section-label" style="color: var(--text-on-peach-muted);">Execution Terminated</div>
-            <div class="error-card">
-                <div class="error-card-header">
-                    <span class="error-card-type">${errorType}</span>
-                    <span class="error-card-line">${errorLine}</span>
-                </div>
-                <div class="error-card-message">${errorMsg}</div>
-            </div>
+        <div class="error-display">
+            <div class="error-display-heading">Execution Terminated</div>
+            <div class="error-display-type">${errorType}</div>
+            <div class="error-display-message">${errorMsg}</div>
+            <div class="error-display-suggestion">${suggestion}</div>
         </div>
     `;
 }
@@ -240,23 +252,20 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // exception section (uses deep brown error card for high contrast)
+    // exception section (centered display, no cards)
     let errorHTML = '';
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const safeMsg = snapshot.exception.message
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const suggestion = ERROR_SUGGESTIONS[safeType] || 'Review your code and try again.';
         errorHTML = `
-            <div class="viz-section" style="width: 100%;">
-                <div class="viz-section-label" style="color: var(--text-on-peach-muted);">Execution Terminated</div>
-                <div class="error-card">
-                    <div class="error-card-header">
-                        <span class="error-card-type">${safeType}</span>
-                        <span class="error-card-line">Line ${snapshot.line}</span>
-                    </div>
-                    <div class="error-card-message">${safeMsg}</div>
-                </div>
+            <div class="error-display">
+                <div class="error-display-heading">Execution Terminated</div>
+                <div class="error-display-type">${safeType}</div>
+                <div class="error-display-message">${safeMsg}</div>
+                <div class="error-display-suggestion">${suggestion}</div>
             </div>
         `;
     }
