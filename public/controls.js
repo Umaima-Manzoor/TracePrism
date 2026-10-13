@@ -27,23 +27,9 @@ async function runTrace() {
 
         const data = await response.json();
 
-        // Handle syntax/compilation error reported by backend
-        if (data.error && data.error.error_type === 'SyntaxError') {
-            highlightLine(data.error.line);
-            DOM.vizCanvas.innerHTML = `
-                <div class="viz-section">
-                    <div class="viz-section-label" style="color: var(--accent-coral);">Syntax Error</div>
-                    <div class="var-chip" data-type="bool" style="border-color: var(--accent-coral);">
-                        <div class="var-chip-head">
-                            <span class="var-chip-name" style="color: var(--accent-coral);">Line ${data.error.line}</span>
-                            <span class="var-chip-type" style="color: var(--accent-coral);">SYNTAX</span>
-                        </div>
-                        <div class="var-chip-value">${data.error.message}</div>
-                    </div>
-                </div>
-            `;
-            DOM.stepIndicator.innerText = 'SYNTAX ERROR';
-            DOM.vizMode.innerText = 'ERROR';
+        // Handle any pre-execution error (syntax, import, runtime with no snapshots)
+        if (data.error && (!data.snapshots || data.snapshots.length === 0)) {
+            renderError(data.error);        // renders deep brown error card, no animation
             return;
         }
 
@@ -64,13 +50,10 @@ async function runTrace() {
 
     } catch (err) {     // network errors
         console.error('Trace execution failed:', err);
-        DOM.stepIndicator.innerText = 'OFFLINE';
-        DOM.vizCanvas.innerHTML = `
-            <div class="canvas-placeholder">
-                <span class="placeholder-title" style="color: var(--accent-coral);">Backend Connection Failed</span>
-                <span class="placeholder-sub">Ensure Flask is running in terminal (python backend/app.py)</span>
-            </div>
-        `;
+        renderError({
+            error_type: 'ConnectionError',
+            message: 'Failed to connect to the execution server. Ensure the backend is running.'
+        });
     } finally {
         DOM.btnTrace.disabled = false;
         DOM.btnTrace.innerText = 'Run Trace';

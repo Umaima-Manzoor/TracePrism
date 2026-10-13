@@ -73,8 +73,8 @@ def trace_code():
 
     raw_result = tracer.trace(source_code)
 
-    if raw_result.get('error') and raw_result.get('error_type') == 'SyntaxError':
-        return jsonify(raw_result), 200
+    if raw_result.get('error') and len(raw_result.get('snapshots', [])) == 0:
+        return jsonify(raw_result), 200     # return pre-execution errors immediately (no animation)
 
     compressed_snapshots = processor.process(raw_result['snapshots'])
 

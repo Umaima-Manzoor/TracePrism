@@ -443,6 +443,51 @@ html, body {
     word-break: break-word;
 }
 
+/* error card (deep brown) */
+.error-card {
+    background-color: #4a2817;              /* Deep warm brown - maximum readability */
+    border: 1px solid #7c3f25;              /* Terracotta border */
+    border-left: 4px solid var(--accent-coral); /* Prominent coral error bracket */
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.error-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.error-card-type {
+    font-family: var(--font-code);
+    font-size: 13px;
+    font-weight: 700;
+    color: #ff9b9b;                         /* Soft coral red for high contrast on brown */
+    letter-spacing: 0.5px;
+}
+
+.error-card-line {
+    font-family: var(--font-code);
+    font-size: 11px;
+    font-weight: 600;
+    color: #d4a373;                         /* Warm sand badge */
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.error-card-message {
+    font-family: var(--font-code);
+    font-size: 13px;
+    line-height: 20px;
+    color: #ede8df;                         /* Champagne cream text - 100% readable on brown */
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
 /*  CALL STACK (GROWS UPWARD, NEW FRAMES ON TOP) */
 .stack-wrapper {
     position: relative;

@@ -59,6 +59,39 @@ function precomputeAllLocals() {
     }
 }
 
+// standalone error renderer - renders high-contrast deep brown error card immediately
+function renderError(errorObj) {    
+    const errorType = errorObj.error_type || errorObj.type || 'Error';          // synatx/import - runtime errors - fallback
+    const errorMsg = errorObj.message || 'An error occurred during execution.';
+    const errorLine = errorObj.line ? `Line ${errorObj.line}` : 'Pre-execution';
+
+    if (errorObj.line) {
+        highlightLine(errorObj.line);       // highlight the failing line in editor
+    } else {
+        highlightLine(null);                // hide highlight for pre-execution errors
+    }
+
+    DOM.vizCanvas.parentElement.classList.add('canvas-active');     // activate peach bg
+    DOM.stepIndicator.innerText = errorType.toUpperCase();
+    DOM.vizMode.innerText = 'ERROR';
+    DOM.stepCounter.innerText = '0 / 0';
+    DOM.timelineSlider.value = 0;
+    DOM.timelineSlider.max = 0;
+
+    DOM.vizCanvas.innerHTML = `
+        <div class="viz-section" style="width: 100%;">
+            <div class="viz-section-label" style="color: var(--text-on-peach-muted);">Execution Terminated</div>
+            <div class="error-card">
+                <div class="error-card-header">
+                    <span class="error-card-type">${errorType}</span>
+                    <span class="error-card-line">${errorLine}</span>
+                </div>
+                <div class="error-card-message">${errorMsg}</div>
+            </div>
+        </div>
+    `;
+}
+
 // master unified canvas orchestrator - renders complete state for any step
 function renderStep(stepIndex) {
     // idle state - reset everything to default
@@ -207,7 +240,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // exception section
+    // exception section (uses deep brown error card for high contrast)
     let errorHTML = '';
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
@@ -215,12 +248,14 @@ function renderStep(stepIndex) {
         const safeMsg = snapshot.exception.message
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         errorHTML = `
-            <div class="viz-section">
-                <div class="viz-section-label" style="color: var(--accent-coral);">Exception Raised</div>
-                <div class="var-row" data-type="bool">
-                    <span class="var-name" style="color: var(--accent-coral); font-weight: 700;">${safeType}</span>
-                    <span class="var-colon">:</span>
-                    <span class="var-value" style="color: var(--text-main);">${safeMsg}</span>
+            <div class="viz-section" style="width: 100%;">
+                <div class="viz-section-label" style="color: var(--text-on-peach-muted);">Execution Terminated</div>
+                <div class="error-card">
+                    <div class="error-card-header">
+                        <span class="error-card-type">${safeType}</span>
+                        <span class="error-card-line">Line ${snapshot.line}</span>
+                    </div>
+                    <div class="error-card-message">${safeMsg}</div>
                 </div>
             </div>
         `;
