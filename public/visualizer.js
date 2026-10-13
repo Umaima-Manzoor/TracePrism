@@ -386,29 +386,16 @@ function renderStep(stepIndex) {
 
     // Output click-to-expand/collapse
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
-    const outputHint = DOM.vizCanvas.querySelector('.output-hint');
-
-    if (outputBlock && outputHint) {
-        // Check overflow synchronously (no requestAnimationFrame needed)
-        const overflows = outputBlock.scrollHeight > outputBlock.clientHeight;
-
-        if (hasOutput && overflows) {
-            outputHint.classList.add('visible');
-        }
-
-        // Restore expanded state if it was expanded before re-render
-        if (wasOutputExpanded && overflows) {
-            outputBlock.classList.add('expanded');
-            outputHint.textContent = '▲ click to collapse';
-        }
-
-        outputHint.addEventListener('click', () => {
-            outputBlock.classList.toggle('expanded');
-            if (outputBlock.classList.contains('expanded')) {
-                outputHint.textContent = '▲ click to collapse';
-            } else {
-                outputHint.textContent = '▼ click to expand';
+    if (outputBlock) {
+        // Check if content overflows after browser paints
+        setTimeout(() => {
+            if (outputBlock.scrollHeight > outputBlock.clientHeight + 5) {
+                outputBlock.classList.add('needs-expand');
             }
+        }, 50);
+
+        outputBlock.addEventListener('click', () => {
+            outputBlock.classList.toggle('expanded');
         });
     }
 }
