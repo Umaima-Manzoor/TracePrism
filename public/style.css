@@ -519,7 +519,7 @@ html, body {
     color: var(--text-main);
     width: 100%;
     max-height: 150px;
-    overflow: hidden;
+    overflow: auto;
     cursor: pointer;
     transition: max-height 300ms var(--ease-out-soft);
 }
