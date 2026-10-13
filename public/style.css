@@ -512,7 +512,7 @@ html, body {
 .output-block {
     background-color: var(--bg-pane);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
     padding: 12px 14px;
     font-family: var(--font-code);
     font-size: 13px;
@@ -520,7 +520,6 @@ html, body {
     width: 100%;
     max-height: 150px;
     overflow: hidden;
-    position: relative;
     cursor: pointer;
     transition: max-height 300ms var(--ease-out-soft);
 }
@@ -530,19 +529,19 @@ html, body {
     overflow-y: auto;
 }
 
+.output-block.no-hint {
+    border-radius: var(--radius-md);
+}
+
 .output-block pre {
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
 }
 
-/* "click to expand" gradient bar at bottom of collapsed output */
-.output-block.needs-expand:not(.expanded)::after {
-    content: '▼ click to expand';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+/* Gradient hint bar below output box */
+.output-hint {
+    display: none;
     padding: 8px;
     text-align: center;
     font-family: var(--font-ui);
@@ -550,23 +549,16 @@ html, body {
     font-weight: 700;
     color: var(--accent-cyan);
     background: linear-gradient(to bottom, transparent 0%, var(--bg-pane) 50%);
-    pointer-events: none;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition-fast);
 }
 
-/* "click to collapse" gradient bar at bottom of expanded output */
-.output-block.needs-expand.expanded::after {
-    content: '▲ click to collapse';
-    position: sticky;
-    bottom: 0;
-    display: block;
-    padding: 8px;
-    text-align: center;
-    font-family: var(--font-ui);
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent-cyan);
-    background: linear-gradient(to bottom, transparent 0%, var(--bg-pane) 50%);
-    pointer-events: none;
+.output-hint:hover {
+    color: var(--text-main);
 }
 
 .output-hint.visible {

@@ -289,7 +289,7 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // OUTPUT SECTION (accumulated up to current step with click-to-expand)
+    // OUTPUT SECTION
     let outputHTML = '';
     let accumulatedOutput = '';
     for (let i = 0; i <= stepIndex; i++) {
@@ -305,21 +305,16 @@ function renderStep(stepIndex) {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
-        // Bake expanded state into HTML so there is no collapse flash on re-render
-        const wasExpanded = false;
-        const blockClass = wasExpanded ? 'output-block expanded' : 'output-block';
-        const hintText = wasExpanded ? '▲ click to collapse' : '▼ click to expand';
-        const hintClass = wasExpanded ? 'output-hint visible' : 'output-hint';
-
         outputHTML = `
             <div class="viz-section">
                 <div class="viz-section-label">Output</div>
-                <div class="${blockClass}"><pre>${safeOutput}</pre></div>
+                <div class="output-block"><pre>${safeOutput}</pre></div>
+                <div class="output-hint">▼ click to expand</div>
             </div>
         `;
     }
 
-    // EXCEPTION OVERLAY (shown on top of animation state)
+    // EXCEPTION OVERLAY
     let errorOverlayHTML = '';
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
@@ -341,7 +336,7 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'EXCEPTION';
     }
 
-    //  UPDATE STATUS MODE TAG
+    // UPDATE STATUS MODE TAG
     if (snapshot.exception) {
         DOM.vizMode.innerText = 'EXCEPTION';
     } else if (varsHTML && stackHTML) {
@@ -356,52 +351,52 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
-    // Save output expanded state before re-rendering
-    const prevOutputBlock = DOM.vizCanvas.querySelector('.output-block');
-       // Save output expanded state before re-rendering
-    const wasOutputExpanded = DOM.vizCanvas.querySelector('.output-block.expanded') !== null;
+    // Save expanded state BEFORE destroying DOM
+    const prevBlock = DOM.vizCanvas.querySelector('.output-block');
+    const wasExpanded = prevBlock !== null && prevBlock.classList.contains('expanded');
+    const prevHint = DOM.vizCanvas.querySelector('.output-hint');
+    const wasHintVisible = prevHint !== null && prevHint.classList.contains('visible');
 
-    // If output was expanded, update the HTML string before injecting
-    if (wasOutputExpanded && outputHTML) {
-        outputHTML = outputHTML
-            .replace('class="output-block"', 'class="output-block expanded"')
-            .replace('class="output-hint"', 'class="output-hint visible"')
-            .replace('▼ click to expand', '▲ click to collapse');
-    }
-
+    // Inject HTML
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
-    // Attach click handlers for expandable nested values
-    const valueElements = DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]');
-    valueElements.forEach((el) => {
-        el.addEventListener('click', () => {
-            el.classList.toggle('expanded');
-            const varName = el.parentElement.querySelector('.var-name').textContent;
-            const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
-            if (rawValue !== undefined) {
-                if (el.classList.contains('expanded')) {
-                    const pretty = formatVariablePretty(rawValue)
-                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    el.innerHTML = pretty;
-                } else {
-                    const compact = formatVariableValue(rawValue)
-                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    el.textContent = compact;
-                }
-            }
-        });
-    });
-
-    // Output click-to-expand/collapse
+    // Restore state and set up handlers AFTER injecting
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
-    if (outputBlock) {
+    const outputHint = DOM.vizCanvas.querySelector('.output-hint');
+
+    if (outputBlock && outputHint) {
+        // Check overflow synchronously
         const overflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
-        if (overflows) {
-            outputBlock.classList.add('needs-expand');
+
+        if (!overflows) {
+            // Content fits — hide hint, round the output block corners
+            outputBlock.classList.add('no-hint');
+        } else {
+            // Content overflows — show hint
+            outputHint.classList.add('visible');
+
+            // Restore expanded state if it was expanded before re-render
+            if (wasExpanded) {
+                outputBlock.classList.add('expanded');
+                outputHint.textContent = '▲ click to collapse';
+            }
         }
 
-        outputBlock.addEventListener('click', () => {
+        // Single toggle handler on both elements
+        const toggleOutput = () => {
             outputBlock.classList.toggle('expanded');
+            outputHint.textContent = outputBlock.classList.contains('expanded')
+                ? '▲ click to collapse'
+                : '▼ click to expand';
+        };
+
+        outputBlock.addEventListener('click', toggleOutput);
+        outputHint.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleOutput();
         });
+    } else if (outputBlock) {
+        // No hint element (no output) — just round corners
+        outputBlock.classList.add('no-hint');
     }
 }
