@@ -307,7 +307,8 @@ function renderStep(stepIndex) {
         outputHTML = `
             <div class="viz-section">
                 <div class="viz-section-label">Output</div>
-                <div class="output-block" title="Click to expand/collapse"><pre>${safeOutput}</pre></div>
+                <div class="output-block"><pre>${safeOutput}</pre></div>
+                <div class="output-toggle" style="display:none;">Show more ▼</div>
             </div>
         `;
     }
@@ -362,42 +363,47 @@ function renderStep(stepIndex) {
         }
     }
 
-    // Attach click handlers for expandable values & output
-
-    // Attach click handlers for expandable values & output
-    const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
+    // Attach click handlers for expandable nested values
+    const valueElements = DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]');
     valueElements.forEach((el) => {
         el.addEventListener('click', () => {
             el.classList.toggle('expanded');
-            if (el.getAttribute('data-nested') === 'true') {
-                const varName = el.parentElement.querySelector('.var-name').textContent;
-                const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
-                if (rawValue !== undefined) {
-                    if (el.classList.contains('expanded')) {
-                        const pretty = formatVariablePretty(rawValue)
-                            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        el.innerHTML = pretty;
-                    } else {
-                        const compact = formatVariableValue(rawValue)
-                            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                        el.textContent = compact;
-                    }
+            const varName = el.parentElement.querySelector('.var-name').textContent;
+            const rawValue = AppState.reconstructedLocals[AppState.currentStep]?.[varName];
+            if (rawValue !== undefined) {
+                if (el.classList.contains('expanded')) {
+                    const pretty = formatVariablePretty(rawValue)
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    el.innerHTML = pretty;
+                } else {
+                    const compact = formatVariableValue(rawValue)
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    el.textContent = compact;
                 }
             }
         });
     });
 
-    const outputBlocks = DOM.vizCanvas.querySelectorAll('.output-block');
-    outputBlocks.forEach((block) => {
-        // Only show expand hint if content actually overflows the collapsed height
-        requestAnimationFrame(() => {       // waits for browser to finish rendering the output block before checking height
-            if (block.scrollHeight > block.clientHeight) {
-                block.classList.add('show-expand-hint');
+    // Output expand/collapse toggle (external link below the box)
+    const outputBlock = DOM.vizCanvas.querySelector('.output-block');
+    const outputToggle = DOM.vizCanvas.querySelector('.output-toggle');
+
+    if (outputBlock && outputToggle) {
+        requestAnimationFrame(() => {
+            if (outputBlock.scrollHeight > outputBlock.clientHeight) {
+                outputToggle.style.display = 'block';
+            }
+            if (wasOutputExpanded) {
+                outputBlock.classList.add('expanded');
+                outputToggle.textContent = 'Show less ▲';
             }
         });
 
-        block.addEventListener('click', () => {
-            block.classList.toggle('expanded');
+        outputToggle.addEventListener('click', () => {
+            outputBlock.classList.toggle('expanded');
+            outputToggle.textContent = outputBlock.classList.contains('expanded')
+                ? 'Show less ▲'
+                : 'Show more ▼';
         });
-    });
+    }
 }

@@ -508,7 +508,7 @@ html, body {
     animation: textGlowFlash 800ms var(--ease-out-soft);
 }
 
-/* program output section with truncation */
+/* program output section */
 .output-block {
     background-color: var(--bg-pane);
     border: 1px solid var(--border-color);
@@ -518,11 +518,14 @@ html, body {
     font-size: 13px;
     color: var(--text-main);
     width: 100%;
-    cursor: pointer;
-    max-height: 120px;
+    max-height: 150px;
     overflow: hidden;
-    position: relative;
     transition: max-height 300ms var(--ease-out-soft);
+}
+
+.output-block.expanded {
+    max-height: 600px;
+    overflow-y: auto;
 }
 
 .output-block pre {
@@ -531,45 +534,22 @@ html, body {
     word-break: break-word;
 }
 
-.output-block.expanded {
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-/* Fade hint at bottom when collapsed and content overflows */
-.output-block.show-expand-hint:not(.expanded)::after {
-    content: '▼ click to expand';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 8px;
+/* Show more/less toggle link below the output box */
+.output-toggle {
+    display: block;
     text-align: center;
     font-family: var(--font-ui);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 500;
-    font-style: normal;
-    color: var(--text-muted);
-    background: linear-gradient(transparent 0%, var(--bg-pane) 80%);
-    pointer-events: none;
+    color: var(--accent-cyan);
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color var(--transition-fast);
+    user-select: none;
 }
 
-.output-block.show-expand-hint.expanded::after {
-    content: '▲ click to collapse';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 6px;
-    text-align: center;
-    font-family: var(--font-ui);
-    font-size: 10px;
-    font-weight: 600;
-    font-style: normal;
-    color: var(--accent-cyan);
-    background-color: var(--bg-pane-header);
-    border-top: 1px solid var(--border-color);
-    pointer-events: none;
+.output-toggle:hover {
+    color: var(--text-main);
 }
 
 /* error overlay: 25% semi-transparent dark layer with vertically centered card group */
