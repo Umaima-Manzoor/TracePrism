@@ -314,7 +314,8 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // exception section (replaces canvas with centered error card on peach bg)
+    // exception overlay (shown on top of animation, not replacing it)
+    let errorOverlayHTML = '';
     if (snapshot.exception) {
         const safeType = snapshot.exception.type
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -322,18 +323,17 @@ function renderStep(stepIndex) {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const suggestion = ERROR_SUGGESTIONS[safeType] || 'Review your code and try again.';
 
-        DOM.vizCanvas.innerHTML = `
-            <div class="error-display">
-                <div class="error-display-heading">Execution Terminated</div>
-                <div class="error-display-card">
-                    <div class="error-display-type">${safeType}</div>
-                    <div class="error-display-message">${safeMsg}</div>
-                    <div class="error-display-suggestion">${suggestion}</div>
+        errorOverlayHTML = `
+            <div class="error-overlay">
+                <div class="error-overlay-heading">Execution Terminated</div>
+                <div class="error-overlay-card">
+                    <div class="error-overlay-type">${safeType}</div>
+                    <div class="error-overlay-message">${safeMsg}</div>
+                    <div class="error-overlay-suggestion">${suggestion}</div>
                 </div>
             </div>
         `;
         DOM.vizMode.innerText = 'EXCEPTION';
-        return;
     }
 
     // update status mode tag
@@ -349,7 +349,7 @@ function renderStep(stepIndex) {
         DOM.vizMode.innerText = 'RUNNING';
     }
 
-    DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML;
+    DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
     // attach click handlers for value expand/collapse
     const valueElements = DOM.vizCanvas.querySelectorAll('.var-value');
