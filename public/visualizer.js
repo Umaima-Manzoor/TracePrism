@@ -233,7 +233,7 @@ function renderStep(stepIndex) {
                     <span class="var-type-tag">[${type}]</span>
                     <span class="var-name">${name}</span>
                     <span class="var-equals">=</span>
-                    <span class="var-value"${nestedAttr} title="Click to expand/collapse">${safeValue}</span>
+                    <span class="var-value"${nestedAttr}${isNested ? ' title="Click to expand/collapse"' : ''}>${safeValue}</span>
                 </div>
             `;
         }
