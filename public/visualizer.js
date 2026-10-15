@@ -362,6 +362,20 @@ function renderStep(stepIndex) {
     // Inject HTML
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
+    // Attach expand/collapse handlers for nested variables
+    DOM.vizCanvas.querySelectorAll('.var-value[data-nested="true"]').forEach(el => {
+        const varName = el.closest('.var-row').querySelector('.var-name').textContent;
+        const compactText = el.textContent;
+        const prettyText = formatVariablePretty(currentLocals[varName]);
+        let expanded = false;
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', () => {
+            expanded = !expanded;
+            el.textContent = expanded ? prettyText : compactText;
+            el.style.whiteSpace = expanded ? 'pre' : 'nowrap';
+        });
+    });
+
     // Restore state and set up handlers
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
     const outputHint = DOM.vizCanvas.querySelector('.output-hint');
