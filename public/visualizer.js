@@ -418,3 +418,22 @@ function renderStep(stepIndex) {
         outputBlock.classList.add('no-hint');
     }
 }
+
+// event delegation for nested variable expand/collapse
+DOM.vizCanvas.addEventListener('click', function(e) {
+    const target = e.target.closest('.var-value[data-nested="true"]');
+    if (!target) return;
+    const varName = target.closest('.var-row').querySelector('.var-name').textContent;
+    const locals = AppState.reconstructedLocals[AppState.currentStep] || {};
+    const rawValue = locals[varName];
+    if (rawValue === undefined) return;
+    if (target.classList.contains('var-expanded')) {
+        target.textContent = formatVariableValue(rawValue);
+        target.style.whiteSpace = 'nowrap';
+        target.classList.remove('var-expanded');
+    } else {
+        target.textContent = formatVariablePretty(rawValue);
+        target.style.whiteSpace = 'pre';
+        target.classList.add('var-expanded');
+    }
+});
