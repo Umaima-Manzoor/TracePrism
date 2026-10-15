@@ -14,6 +14,7 @@ except ImportError:
     from python.tracer import Tracer
 
 app = Flask(__name__)
+app.config['JSON_SORT_KEYS'] = False      # preserve dict insertion order
 CORS(app, resources={r"/*": {"origins": "*"}})      # allow requests from any domain
 
 def get_client_ip():
