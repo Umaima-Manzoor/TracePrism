@@ -416,10 +416,8 @@ html, body {
 }
 
 .var-equals {
-    color: var(--text-dim);
-    margin-left: 6px;
-    margin-right: 6px;
-    flex-shrink: 0;
+    margin: 0 6px;
+    color: #6b7280;
 }
 
 .var-value {
