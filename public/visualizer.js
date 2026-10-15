@@ -225,16 +225,14 @@ function renderStep(stepIndex) {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
 
-            const isNested = (type === 'list' || type === 'dict' || type === 'tuple' || type === 'set')
-                && (formattedValue.includes('[') || formattedValue.includes('{') || formattedValue.includes('('))
-                && formattedValue.length > 40;
+            const isNested = formattedValue.length > 40;
             const nestedAttr = isNested ? ' data-nested="true"' : '';
 
             rowsHTML += `
                 <div class="var-row${changeClass}" data-type="${type}">
                     <span class="var-type-tag">[${type}]</span>
                     <span class="var-name">${name}</span>
-                    <span class="var-equals"> =</span>
+                    <span class="var-equals">=</span>
                     <span class="var-value"${nestedAttr} title="Click to expand/collapse">${safeValue}</span>
                 </div>
             `;
@@ -374,7 +372,7 @@ function renderStep(stepIndex) {
         if (!outputOverflows) {
             // Temporarily collapse to measure true overflow
             outputBlock.classList.remove('expanded');
-            outputOverflows = outputBlock.scrollHeight > outputBlock.clientHeight + 2;
+            outputOverflows = outputBlock.scrollHeight > 155;
         }
 
         if (outputOverflows) {

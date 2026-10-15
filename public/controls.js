@@ -17,6 +17,15 @@ async function runTrace() {
     // Pause active playback if running
     pausePlayback();
 
+    // Show loading indicator on animation pane
+    DOM.vizCanvas.parentElement.classList.remove('canvas-active');
+    DOM.vizCanvas.innerHTML = `
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Tracing execution...</div>
+        </div>
+    `;
+
     try {           // sends HTTP POST request to Flask
         const response = await fetch(`${API_BASE_URL}/api/trace`, {
             method: 'POST',

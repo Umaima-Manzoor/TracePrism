@@ -79,6 +79,9 @@ function initEditor() {
             'Ctrl-/': 'toggleComment',       // toggle # comment on selected lines
             'Cmd-/': 'toggleComment',        // same for Mac
             'Ctrl-Space': 'autocomplete',    // trigger keyword autocomplete
+            'Esc': function(cm) {            // removes focus from editor
+                cm.getInputField().blur();
+            },
             'Ctrl-D': function(cm) {         // duplicate current line
                 const cursor = cm.getCursor();
                 const line = cm.getLine(cursor.line);
@@ -157,7 +160,10 @@ function highlightLine(lineNumber) {
     if (cmLine >= 0 && cmLine <= cm.lastLine()) {
         cm.addLineClass(cmLine, 'background', 'trace-highlight-line');
         AppState.highlightedLine = cmLine;
-        cm.scrollIntoView({ line: cmLine, ch: 0 }, 100);
+        // Only auto-scroll editor on desktop (prevents mobile jump to code pane)
+        if (window.innerWidth > 900) {
+            cm.scrollIntoView({ line: cmLine, ch: 0 }, 100);
+        }
         updateEditingHighlightVisibility();     // hide blue if it would collide with peach
     }
 }

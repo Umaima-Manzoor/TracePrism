@@ -287,18 +287,20 @@ html, body {
 }
 
 .canvas-pane.canvas-active .stack-frame {
-    background-color: rgba(255, 255, 255, 0.4);
-    border-bottom-color: var(--text-on-peach-dim);
+    background-color: #0e1018;
+    border-bottom-color: #1a1e28;
+    color: var(--text-main);
 }
 
 .canvas-pane.canvas-active .stack-frame.active-frame {
-    background-color: rgba(255, 255, 255, 0.7);
+    background-color: #161a24;
+    color: #ffd7a8;
 }
 
 .canvas-pane.canvas-active .output-block {
-    background-color: rgba(42, 31, 20, 0.08);
-    border-color: var(--text-on-peach-dim);
-    color: var(--text-on-peach);
+    background-color: #0a0c10;
+    border-color: #1a1e28;
+    color: #a8e6a3;
 }
 
 .canvas-placeholder {
@@ -324,6 +326,39 @@ html, body {
     font-size: 12px;
     color: var(--text-dim);
     max-width: 320px;
+}
+
+/* Loading overlay shown during trace execution */
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    gap: 12px;
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-lime);
+    border-radius: 50%;
+    animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-family: var(--font-code);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
 }
 
 /* canvas renderers */
@@ -382,7 +417,8 @@ html, body {
 
 .var-equals {
     color: var(--text-dim);
-    margin-right: 8px;
+    margin-left: 6px;
+    margin-right: 6px;
     flex-shrink: 0;
 }
 
@@ -470,8 +506,8 @@ html, body {
 
 /* program output section */
 .output-block {
-    background-color: var(--bg-pane);
-    border: 1px solid var(--border-color);
+    background-color: #0a0c10;
+    border: 1px solid #1a1e28;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     padding: 12px 14px;
     font-family: var(--font-code);
@@ -497,6 +533,8 @@ html, body {
     margin: 0;
     white-space: pre-wrap;
     word-break: break-word;
+    color: #a8e6a3;
+    font-family: var(--font-code);
 }
 
 /* Gradient hint bar below output box */
@@ -727,10 +765,11 @@ html, body {
     justify-content: flex-start;
     height: 32px;
     padding: 0 16px;
-    background-color: var(--bg-pane);
-    border-bottom: 1px solid var(--border-color);
+    background-color: #0e1018;
+    border-bottom: 1px solid #1a1e28;
     font-family: var(--font-code);
     font-size: 13px;
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -745,8 +784,8 @@ html, body {
 }
 
 .stack-frame.active-frame {
-    background-color: var(--bg-element);
-    color: var(--text-main);
+    background-color: #161a24;
+    color: #ffd7a8;
     font-weight: 600;
 }
 
