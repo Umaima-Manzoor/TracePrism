@@ -176,6 +176,27 @@ html, body {
     border-color: var(--accent-lime);
 }
 
+/* groups status tag + stale indicator on right side of pane header */
+.pane-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* stale trace warning */
+.stale-tag {
+    font-family: var(--font-code);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent-coral);
+    letter-spacing: 0.3px;
+}
+
+/* generic hide utility */
+.hidden {
+    display: none;
+}
+
 /* shortcuts button in topbar */
 .topbar-actions {
     display: flex;

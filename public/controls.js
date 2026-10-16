@@ -86,6 +86,8 @@ async function runTrace() {
     } finally {
         DOM.btnTrace.disabled = false;
         DOM.btnTrace.innerText = 'Run Trace';
+        AppState.isStale = false;                           // fresh trace
+        DOM.staleIndicator.classList.add('hidden');          // hide stale warning
     }
 }
 
@@ -167,6 +169,8 @@ DOM.btnClear.addEventListener('click', () => {
     AppState.totalSteps = 0;
     AppState.currentStep = -1;
     AppState.reconstructedLocals = [];
+    AppState.isStale = false;                       // no trace to be stale against
+    DOM.staleIndicator.classList.add('hidden');      // hide stale warning
     renderStep(-1);         // idle state
 });
 

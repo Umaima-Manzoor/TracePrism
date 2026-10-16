@@ -9,6 +9,7 @@ const AppState = {
     playbackSpeed: 600,         // millisecond duration per auto-advance step
     editor: null,               // CodeMirror editor instance
     highlightedLine: null,      // currently highlighted line (0-indexed for CodeMirror)
+    isStale: false,             // true when editor code changed after last trace
 };
 
 // DOM cache - storing references to avoid repeated lookups
@@ -19,6 +20,7 @@ const DOM = {
     // Editor Elements
     editorContainer: document.getElementById('code-editor-container'),  // CodeMirror mounts here
     stepIndicator: document.getElementById('step-indicator'),           // status tag at editor top
+    staleIndicator: document.getElementById('stale-indicator'),         // "code modified" warning
 
     // Canvas Elements
     vizCanvas: document.getElementById('viz-canvas'),       // animation/visualization side
@@ -120,6 +122,12 @@ let autocompleteTimeout = null;
 AppState.editor.on('change', function(cm, changeObj) {
     // Save current code to localStorage automatically
     localStorage.setItem('traceprism_code', cm.getValue());
+
+    // Show stale indicator if user edits code while a trace is active
+    if (AppState.totalSteps > 0 && !AppState.isStale) {
+        AppState.isStale = true;
+        DOM.staleIndicator.classList.remove('hidden');
+    }
 
     // Autocomplete suggestions logic
     if (changeObj.origin === '+delete' || changeObj.origin === 'paste' || changeObj.origin === 'undo' || changeObj.origin === 'redo') return;
