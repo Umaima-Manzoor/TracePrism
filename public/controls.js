@@ -18,7 +18,7 @@ async function runTrace() {
     pausePlayback();
 
     // Show loading indicator on animation pane
-    DOM.vizCanvas.parentElement.classList.remove('canvas-active');
+    DOM.vizCanvas.parentElement.classList.add('canvas-active');
     DOM.vizCanvas.innerHTML = `
         <div class="loading-overlay">
             <div class="loading-spinner"></div>
