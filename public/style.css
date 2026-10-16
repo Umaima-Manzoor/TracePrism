@@ -271,7 +271,11 @@ html, body {
 }
 
 .canvas-pane.canvas-active .frame-func {
-    color: var(--text-on-peach);
+    color: #c8cad4;
+}
+
+.canvas-pane.canvas-active .stack-frame.active-frame .frame-func {
+    color: #ffd7a8;
 }
 
 .canvas-pane.canvas-active .placeholder-title {
