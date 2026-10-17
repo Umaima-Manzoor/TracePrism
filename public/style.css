@@ -21,6 +21,7 @@
     --accent-lime-dim: #e6b88e;            /* Muted Peach for hovers */
     --accent-cyan: #5eead4;                /* Vibrant teal */
     --accent-coral: #c07a72;               /* Muted clay */
+    --accent-amber: #f0b429;               /* Honey amber — stale/modified indicator */
 
     /* Data Type Colors (readable on both dark and peach) */
     --type-int: #a85a0f;                   /* Deep burnt amber */
@@ -176,19 +177,12 @@ html, body {
     border-color: var(--accent-lime);
 }
 
-/* groups status tag + stale indicator on right side of pane header */
-.pane-header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* stale trace warning */
+/* stale trace indicator — centered in editor pane header */
 .stale-tag {
     font-family: var(--font-code);
     font-size: 11px;
     font-weight: 500;
-    color: var(--accent-coral);
+    color: var(--accent-amber);
     letter-spacing: 0.3px;
 }
 
@@ -196,6 +190,14 @@ html, body {
 .hidden {
     display: none;
 }
+
+/* groups status tag + stale indicator on right side of pane header */
+.pane-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 
 /* shortcuts button in topbar */
 .topbar-actions {
