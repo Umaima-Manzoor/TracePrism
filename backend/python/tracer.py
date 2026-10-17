@@ -1,12 +1,9 @@
 import ast  # for scanning blocked imports before execution
 import copy  # for deepcopy
 import io  # for capturing print() output
-import logging  # for proper logger (not root logger)
 import sys  # for sys.settrace
 import time  # for 5-sec execution timeout check
 from typing import ClassVar  # for marking class-level constants
-
-logger = logging.getLogger(__name__)        # proper named logger instead of root
 
 class Tracer:
 
@@ -17,7 +14,6 @@ class Tracer:
     def __init__(self):
         self.snapshots = []
         self._step_counter = 0
-        self._call_stack = []
         self._stdout_buffer = None       # reference to active stdout buffer
         self._last_stdout_length = 0     # tracks how much output was captured before this step
         self._start_time = 0            # timestamp when execution began
@@ -75,15 +71,6 @@ class Tracer:
             return self._trace_callback
 
         func_name = frame.f_code.co_name
-
-        if event == 'call':
-            self._call_stack.append(func_name)
-        elif event == 'return':
-            if self._call_stack:
-                self._call_stack.pop()
-            else:
-                logger.warning("Return even with empty call stack.")
-
         safe_locals = self._sanitize_locals(frame.f_locals)
 
         snapshot = {
@@ -174,7 +161,6 @@ class Tracer:
     def trace(self, source_code):       # main func called by Flask API
         self.snapshots = []
         self._step_counter = 0
-        self._call_stack = []
 
         # check for blocked imports AND syntax errors before execution
         import_error = self._check_blocked_imports(source_code)
