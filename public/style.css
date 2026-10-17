@@ -69,6 +69,7 @@
     --border-color: #1e2028;
     --border-strong: #2e3040;
     --border-output: #1a1e28;
+    --border-partition: #7a6a55;
     --radius-sm: 3px;
     --radius-md: 6px;
     --radius-lg: 10px;
@@ -155,7 +156,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3px;
-    background-color: var(--type-none);
+    background-color: var(--border-partition);
     height: 100%;
     overflow: hidden;
 }
