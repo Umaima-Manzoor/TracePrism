@@ -155,15 +155,9 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3px;
-    background-color: var(--text-dim);
+    background-color: var(--accent-coral);
     height: 100%;
     overflow: hidden;
-    transition: background-color var(--transition-normal);
-}
-
-/* when canvas is active (peach), use a darker partition for contrast */
-.workspace:has(.canvas-pane.canvas-active) {
-    background-color: var(--text-on-peach);
 }
 
 .editor-pane,
@@ -566,7 +560,7 @@ body {
 
 /* On peach canvas, use coral so the indicator is visible against the peach bg */
 .canvas-pane.canvas-active .var-row.chip-changed {
-    animation: varChangeIndicatorPeach 1400ms var(--ease-out-soft);
+    animation: varChangeIndicatorPeach 900ms var(--ease-out-soft);
 }
 
 @keyframes varChangeIndicatorPeach {
@@ -1080,31 +1074,45 @@ body {
     background-color: rgba(var(--accent-lime-rgb), 0.2);
 }
 
-/* Trace execution line highlight — background tint only (bar is on gutter) */
+/* Trace execution line highlight — background tint, extends to full line width */
 #code-editor-container .CodeMirror-linebackground.trace-highlight-line {
     background-color: var(--bg-element) !important;
     border-radius: 3px !important;
+    min-width: calc(100% - 1.5rem) !important;
+    width: max-content !important;
+    box-sizing: border-box !important;
+    margin-right: 1.5rem !important;
 }
 
-/* Active line background tint — background only (bar is on gutter) */
+/* Active line background tint — extends to full line width */
 #code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background {
     background-color: var(--bg-activeline) !important;
     border-radius: 3px !important;
+    min-width: calc(100% - 1.5rem) !important;
+    width: max-content !important;
+    box-sizing: border-box !important;
+    margin-right: 1.5rem !important;
 }
 
-/* Colored bars live on the gutter — they never scroll horizontally with code */
+/* The sizer determines scrollable width — ensure line backgrounds stretch within it */
+#code-editor-container .CodeMirror-sizer {
+    min-width: 100%;
+}
+
+/* Colored bars live on the gutter wrapper — never scroll horizontally with code */
 #code-editor-container .CodeMirror-gutter-wrapper {
     position: relative;
 }
 
-#code-editor-container .CodeMirror-activeline-gutter {
+/* Active line celadon bar — attached to the line number gutter row */
+#code-editor-container .CodeMirror-activeline-gutter .CodeMirror-linenumber {
     position: relative;
 }
 
-#code-editor-container .CodeMirror-activeline-gutter::after {
+#code-editor-container .CodeMirror-activeline-gutter .CodeMirror-linenumber::after {
     content: '';
     position: absolute;
-    right: -4px;
+    right: -0.5rem;
     top: 0;
     width: 4px;
     height: 100%;
@@ -1113,14 +1121,15 @@ body {
     z-index: 4;
 }
 
-#code-editor-container .CodeMirror-gutter-background.trace-highlight-gutter {
-    background-color: transparent;
+/* Trace peach bar — attached to the gutter via custom class */
+#code-editor-container .trace-highlight-gutter .CodeMirror-linenumber {
+    position: relative;
 }
 
-#code-editor-container .CodeMirror-gutter-background.trace-highlight-gutter::after {
+#code-editor-container .trace-highlight-gutter .CodeMirror-linenumber::after {
     content: '';
     position: absolute;
-    right: -4px;
+    right: -0.5rem;
     top: 0;
     width: 4px;
     height: 100%;

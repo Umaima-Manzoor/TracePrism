@@ -118,15 +118,28 @@ function initEditor() {
 initEditor();       // create the editor on page load
 AppState.editor.setOption('styleActiveLine', false);     // hide blue bar until user clicks in
 
+// Normalize code for stale comparison — strips whitespace-only differences
+// that don't affect Python execution semantics
+function normalizeCodeForComparison(code) {
+    return code
+        .split('\n')                        // split into lines
+        .map(line => line.replace(/\s+$/, ''))  // strip trailing whitespace from each line
+        .join('\n')                         // rejoin
+        .replace(/\n{2,}/g, '\n\n')         // collapse 3+ blank lines into max 2
+        .replace(/^\s*\n|\n\s*$/g, '');     // strip leading/trailing blank lines
+}
+
 // auto-show autocomplete suggestions as user types (75ms delay like VS Code)
 let autocompleteTimeout = null;
 AppState.editor.on('change', function(cm, changeObj) {
     // Save current code to localStorage automatically
     localStorage.setItem('traceprism_code', cm.getValue());
 
-    // Compare current editor content against last traced code
+    // Compare current editor content against last traced code (whitespace-normalized)
     if (AppState.totalSteps > 0) {
-        const isNowStale = cm.getValue() !== AppState.tracedCode;
+        const currentNormalized = normalizeCodeForComparison(cm.getValue());
+        const tracedNormalized = normalizeCodeForComparison(AppState.tracedCode);
+        const isNowStale = currentNormalized !== tracedNormalized;
         if (isNowStale !== AppState.isStale) {      // only touch DOM when state actually flips
             AppState.isStale = isNowStale;
             DOM.staleIndicator.classList.toggle('hidden', !isNowStale);
