@@ -155,7 +155,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3px;
-    background-color: #4a4030;
+    background-color: var(--type-none);
     height: 100%;
     overflow: hidden;
 }
