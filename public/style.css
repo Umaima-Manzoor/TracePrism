@@ -1091,7 +1091,7 @@ body {
 
 /* Space between gutter and code text */
 #code-editor-container .CodeMirror-line {
-    padding-left: 1.5rem !important;
+    padding-left: 1.125rem !important;
 }
 
 /* Python syntax colors */
