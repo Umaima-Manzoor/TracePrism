@@ -4,6 +4,7 @@ const API_BASE_URL = '';
 // API trigger (run trace via fetch)
 async function runTrace() {
     const sourceCode = AppState.editor ? AppState.editor.getValue() : '';
+    AppState.tracedCode = sourceCode;       // remember exactly what we're about to trace
     if (!sourceCode.trim()) {
         renderStep(-1);       // show idle state when code is empty
         return;
@@ -86,8 +87,10 @@ async function runTrace() {
     } finally {
         DOM.btnTrace.disabled = false;
         DOM.btnTrace.innerText = 'Run Trace';
-        AppState.isStale = false;                           // fresh trace
-        DOM.staleIndicator.classList.add('hidden');          // hide stale warning
+        // Re-evaluate staleness: user may have edited during the fetch
+        const currentCode = AppState.editor ? AppState.editor.getValue() : '';
+        AppState.isStale = currentCode !== AppState.tracedCode;
+        DOM.staleIndicator.classList.toggle('hidden', !AppState.isStale);
     }
 }
 
@@ -170,6 +173,7 @@ DOM.btnClear.addEventListener('click', () => {
     AppState.currentStep = -1;
     AppState.reconstructedLocals = [];
     AppState.isStale = false;                       // no trace to be stale against
+    AppState.tracedCode = '';
     DOM.staleIndicator.classList.add('hidden');      // hide stale warning
     renderStep(-1);         // idle state
 });

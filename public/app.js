@@ -10,6 +10,7 @@ const AppState = {
     editor: null,               // CodeMirror editor instance
     highlightedLine: null,      // currently highlighted line (0-indexed for CodeMirror)
     isStale: false,             // true when editor code changed after last trace
+     tracedCode: '',             // exact code string sent to backend on last run
 };
 
 // DOM cache - storing references to avoid repeated lookups
@@ -123,10 +124,13 @@ AppState.editor.on('change', function(cm, changeObj) {
     // Save current code to localStorage automatically
     localStorage.setItem('traceprism_code', cm.getValue());
 
-    // Show stale indicator if user edits code while a trace is active
-    if (AppState.totalSteps > 0 && !AppState.isStale) {
-        AppState.isStale = true;
-        DOM.staleIndicator.classList.remove('hidden');
+    // Compare current editor content against last traced code
+    if (AppState.totalSteps > 0) {
+        const isNowStale = cm.getValue() !== AppState.tracedCode;
+        if (isNowStale !== AppState.isStale) {      // only touch DOM when state actually flips
+            AppState.isStale = isNowStale;
+            DOM.staleIndicator.classList.toggle('hidden', !isNowStale);
+        }
     }
 
     // Autocomplete suggestions logic
