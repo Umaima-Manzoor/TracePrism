@@ -155,7 +155,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3px;
-    background-color: var(--accent-coral);
+    background-color: #4a4030;
     height: 100%;
     overflow: hidden;
 }
@@ -1074,79 +1074,23 @@ body {
     background-color: rgba(var(--accent-lime-rgb), 0.2);
 }
 
-/* Trace execution line highlight — background tint, extends to full line width */
+/* Trace execution line highlight — peach left border, full-row background */
 #code-editor-container .CodeMirror-linebackground.trace-highlight-line {
     background-color: var(--bg-element) !important;
+    border-left: 7px solid var(--accent-lime) !important;
     border-radius: 3px !important;
-    min-width: calc(100% - 1.5rem) !important;
-    width: max-content !important;
-    box-sizing: border-box !important;
-    margin-right: 1.5rem !important;
 }
 
-/* Active line background tint — extends to full line width */
+/* Active line background tint — celadon left border, full-row background */
 #code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background {
     background-color: var(--bg-activeline) !important;
+    border-left: 7px solid var(--accent-cyan) !important;
     border-radius: 3px !important;
-    min-width: calc(100% - 1.5rem) !important;
-    width: max-content !important;
-    box-sizing: border-box !important;
-    margin-right: 1.5rem !important;
-}
-
-/* The sizer determines scrollable width — ensure line backgrounds stretch within it */
-#code-editor-container .CodeMirror-sizer {
-    min-width: 100%;
-}
-
-/* Colored bars live on the gutter wrapper — never scroll horizontally with code */
-#code-editor-container .CodeMirror-gutter-wrapper {
-    position: relative;
-}
-
-/* Active line celadon bar — attached to the line number gutter row */
-#code-editor-container .CodeMirror-activeline-gutter .CodeMirror-linenumber {
-    position: relative;
-}
-
-#code-editor-container .CodeMirror-activeline-gutter .CodeMirror-linenumber::after {
-    content: '';
-    position: absolute;
-    right: -0.5rem;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background-color: var(--accent-cyan);
-    border-radius: 2px;
-    z-index: 4;
-}
-
-/* Trace peach bar — attached to the gutter via custom class */
-#code-editor-container .trace-highlight-gutter .CodeMirror-linenumber {
-    position: relative;
-}
-
-#code-editor-container .trace-highlight-gutter .CodeMirror-linenumber::after {
-    content: '';
-    position: absolute;
-    right: -0.5rem;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background-color: var(--accent-lime);
-    border-radius: 2px;
-    z-index: 5;
 }
 
 /* Space between gutter and code text */
 #code-editor-container .CodeMirror-line {
     padding-left: 1.5rem !important;
-    padding-right: 2rem !important;
-}
-
-/* Right breathing room on the whole lines container */
-#code-editor-container .CodeMirror-lines {
-    padding-right: 1rem;
 }
 
 /* Python syntax colors */
