@@ -35,6 +35,13 @@ async function runTrace() {
         });
 
         if (!response.ok) {
+            if (response.status === 429) {
+                renderError({
+                    error_type: 'RateLimitError',
+                    message: 'Too many requests. Please wait a moment before running another trace.',
+                });
+                return;
+            }
             if (response.status === 500 || response.status === 504) {
                 renderError({
                     error_type: 'ExecutionError',

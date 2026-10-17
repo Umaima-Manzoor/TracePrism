@@ -116,6 +116,7 @@ const ERROR_SUGGESTIONS = {
     'RuntimeError': 'Execution exceeded the time/step limit. Check for infinite loops.',
     'ConnectionError': 'Failed to connect to the execution server. Ensure the backend is running.',
     'ExecutionError': 'Your code exceeded server limits. Check for infinite loops, extremely large computations, or excessive memory usage.',
+    'RateLimitError': 'You are sending requests too quickly. Wait a few seconds and try again.',
 };
 
 // Persistent overflow state — survives across re-renders to prevent hint flicker

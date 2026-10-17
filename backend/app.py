@@ -102,13 +102,22 @@ def trace_code():
 # universal route handler - catches all urls and dispatches by method
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
-@limiter.exempt
+@limiter.limit("100 per minute", methods=["POST"])
 def universal_handler(path):
     if request.method == 'OPTIONS':
         return '', 204
     if request.method == 'POST':
         return trace_code()
     return health_check()
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({
+        'error': True,
+        'error_type': 'RateLimitError',
+        'message': 'Too many requests. Please wait a moment before running another trace.',
+    }), 429
 
 
 if __name__ == '__main__':
