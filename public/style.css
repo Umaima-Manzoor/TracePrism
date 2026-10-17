@@ -107,7 +107,7 @@ body {
 /* master app layout (css grid) */
 .app-layout {
     display: grid;
-    grid-template-rows: 3rem 1fr 3.5rem;
+    grid-template-rows: 3.75rem 1fr 3.5rem;
     width: 100%;
     max-width: 100%;
     height: 100vh;
@@ -118,9 +118,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1.25rem;
+    padding: 0.75rem 1.25rem 0;
     background-color: var(--bg-pane);
-    border-top: 2px solid var(--accent-lime);
     border-bottom: 1px solid var(--border-color);
     z-index: 10;
 }
@@ -155,10 +154,16 @@ body {
 .workspace {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    background-color: var(--border-strong);
+    gap: 3px;
+    background-color: var(--text-dim);
     height: 100%;
     overflow: hidden;
+    transition: background-color var(--transition-normal);
+}
+
+/* when canvas is active (peach), use a darker partition for contrast */
+.workspace:has(.canvas-pane.canvas-active) {
+    background-color: var(--text-on-peach);
 }
 
 .editor-pane,
@@ -537,15 +542,46 @@ body {
     flex-shrink: 0;
 }
 
-/* Variable change indicator — peach left bar that holds then fades */
+/* Variable change indicator — subtle background tint + left bar */
 @keyframes varChangeIndicator {
-    0% { box-shadow: inset 3px 0 0 0 var(--accent-lime); }      /* no layout shift */
-    60% { box-shadow: inset 3px 0 0 0 var(--accent-lime); }
-    100% { box-shadow: inset 3px 0 0 0 transparent; }
+    0% {
+        background-color: rgba(var(--accent-lime-rgb), 0.12);
+        box-shadow: inset 4px 0 0 0 var(--accent-lime);
+    }
+    70% {
+        background-color: rgba(var(--accent-lime-rgb), 0.12);
+        box-shadow: inset 4px 0 0 0 var(--accent-lime);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: inset 4px 0 0 0 transparent;
+    }
 }
 
 .var-row.chip-changed {
-    animation: varChangeIndicator 1200ms var(--ease-out-soft);
+    animation: varChangeIndicator 1400ms var(--ease-out-soft);
+    padding-left: 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+/* On peach canvas, use coral so the indicator is visible against the peach bg */
+.canvas-pane.canvas-active .var-row.chip-changed {
+    animation: varChangeIndicatorPeach 1400ms var(--ease-out-soft);
+}
+
+@keyframes varChangeIndicatorPeach {
+    0% {
+        background-color: rgba(192, 122, 114, 0.2);
+        box-shadow: inset 4px 0 0 0 var(--accent-coral);
+    }
+    70% {
+        background-color: rgba(192, 122, 114, 0.2);
+        box-shadow: inset 4px 0 0 0 var(--accent-coral);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: inset 4px 0 0 0 transparent;
+    }
 }
 
 /* program output section */
@@ -1044,54 +1080,64 @@ body {
     background-color: rgba(var(--accent-lime-rgb), 0.2);
 }
 
-/* Trace execution line highlight (bar sits on gutter outline) */
+/* Trace execution line highlight — background tint only (bar is on gutter) */
 #code-editor-container .CodeMirror-linebackground.trace-highlight-line {
     background-color: var(--bg-element) !important;
-    border-left: none !important;
     border-radius: 3px !important;
-    overflow: visible !important;
 }
 
-#code-editor-container .CodeMirror-linebackground.trace-highlight-line::before {
-    content: '';
-    position: sticky;
-    left: 0;
-    display: block;
-    width: 7px;
-    height: 100%;
-    background-color: var(--accent-lime);
-    border-radius: 3px;
-    z-index: 3;
-}
-
-/* Active line (where cursor is) - celadon bar on gutter outline */
+/* Active line background tint — background only (bar is on gutter) */
 #code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background {
     background-color: var(--bg-activeline) !important;
-    border-left: none !important;
     border-radius: 3px !important;
-    overflow: visible !important;
 }
 
-#code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background::before {
+/* Colored bars live on the gutter — they never scroll horizontally with code */
+#code-editor-container .CodeMirror-gutter-wrapper {
+    position: relative;
+}
+
+#code-editor-container .CodeMirror-activeline-gutter {
+    position: relative;
+}
+
+#code-editor-container .CodeMirror-activeline-gutter::after {
     content: '';
-    position: sticky;
-    left: 0;
-    display: block;
-    width: 7px;
+    position: absolute;
+    right: -4px;
+    top: 0;
+    width: 4px;
     height: 100%;
     background-color: var(--accent-cyan);
-    border-radius: 3px;
-    z-index: 3;
+    border-radius: 2px;
+    z-index: 4;
 }
 
-/* Space between gutter and code text (like VS Code) */
+#code-editor-container .CodeMirror-gutter-background.trace-highlight-gutter {
+    background-color: transparent;
+}
+
+#code-editor-container .CodeMirror-gutter-background.trace-highlight-gutter::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background-color: var(--accent-lime);
+    border-radius: 2px;
+    z-index: 5;
+}
+
+/* Space between gutter and code text */
 #code-editor-container .CodeMirror-line {
-    padding-left: 0.9375rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 2rem !important;
 }
 
-/* Right breathing room - prevents long lines from touching the center partition */
+/* Right breathing room on the whole lines container */
 #code-editor-container .CodeMirror-lines {
-    padding-right: 1.5rem;
+    padding-right: 1rem;
 }
 
 /* Python syntax colors */
@@ -1295,27 +1341,36 @@ body {
     color: var(--text-muted);
 }
 
-/* custom scrollbar - matches dark theme */
+/* custom scrollbar — matches dark theme */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--bg-app);
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-app);
+    background-color: var(--bg-app);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--bg-element-hover);
-    border-radius: 3px;
+    background-color: var(--bg-element-hover);
+    border-radius: 5px;
+    border: 2px solid var(--bg-app);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-dim);
+    background-color: var(--text-dim);
 }
 
-::-webkit-scrollbar-corner {
-    background: var(--bg-app);
+::-webkit-scrollbar-corner,
+::-webkit-resizer {
+    background-color: var(--bg-app);
+}
+
+/* CodeMirror has its own scroll container with inline styles — override */
+.CodeMirror-scrollbar-filler,
+.CodeMirror-gutter-filler {
+    background-color: var(--bg-pane) !important;
 }
 
 * {
@@ -1410,7 +1465,9 @@ body {
 
     .var-row.chip-changed {
         animation: none !important;
-        box-shadow: inset 3px 0 0 0 var(--accent-lime) !important;
+        box-shadow: inset 4px 0 0 0 var(--accent-lime) !important;
+        background-color: rgba(var(--accent-lime-rgb), 0.12) !important;
+        padding-left: 0.5rem !important;
     }
 
     #code-editor-container .trace-highlight-line {
