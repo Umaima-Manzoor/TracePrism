@@ -34,7 +34,7 @@
     --accent-cyan-rgb: 94, 234, 212;
     --accent-coral: #c07a72;               /* Muted clay */
     --accent-coral-dark: #8a3a35;
-    --accent-amber: #f0b429;               /* Honey amber — stale/modified indicator */
+    --accent-amber: #f0b429;               /* Honey amber - stale/modified indicator */
 
     /* Data Type Colors (readable on both dark and peach) */
     --type-int: #a85a0f;
@@ -120,6 +120,7 @@ body {
     justify-content: space-between;
     padding: 0 1.25rem;
     background-color: var(--bg-pane);
+    border-top: 2px solid var(--accent-lime);
     border-bottom: 1px solid var(--border-color);
     z-index: 10;
 }
@@ -154,8 +155,8 @@ body {
 .workspace {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background-color: var(--border-color);
+    gap: 2px;
+    background-color: var(--border-strong);
     height: 100%;
     overflow: hidden;
 }
@@ -208,7 +209,7 @@ body {
     border-color: var(--accent-lime);
 }
 
-/* stale trace indicator — centered in editor pane header */
+/* stale trace indicator - centered in editor pane header */
 .stale-tag {
     font-family: var(--font-code);
     font-size: 0.6875rem;
@@ -536,24 +537,15 @@ body {
     flex-shrink: 0;
 }
 
-/* Variable change flash - background tint + value color */
-@keyframes varRowFlash {
-    0% { background-color: rgba(var(--accent-cyan-rgb), 0.15); }
-    100% { background-color: transparent; }
-}
-
-@keyframes varValueFlash {
-    0% { color: var(--accent-cyan) !important; font-weight: 700; }
-    50% { color: var(--accent-cyan) !important; }
-    100% { font-weight: 500; }
+/* Variable change indicator — peach left bar that holds then fades */
+@keyframes varChangeIndicator {
+    0% { box-shadow: inset 3px 0 0 0 var(--accent-lime); }      /* no layout shift */
+    60% { box-shadow: inset 3px 0 0 0 var(--accent-lime); }
+    100% { box-shadow: inset 3px 0 0 0 transparent; }
 }
 
 .var-row.chip-changed {
-    animation: varRowFlash 800ms var(--ease-out-soft);
-}
-
-.var-row.chip-changed .var-value {
-    animation: varValueFlash 1000ms var(--ease-out-soft);
+    animation: varChangeIndicator 1200ms var(--ease-out-soft);
 }
 
 /* program output section */
@@ -1055,20 +1047,51 @@ body {
 /* Trace execution line highlight (bar sits on gutter outline) */
 #code-editor-container .CodeMirror-linebackground.trace-highlight-line {
     background-color: var(--bg-element) !important;
-    border-left: 7px solid var(--accent-lime) !important;
+    border-left: none !important;
     border-radius: 3px !important;
+    overflow: visible !important;
+}
+
+#code-editor-container .CodeMirror-linebackground.trace-highlight-line::before {
+    content: '';
+    position: sticky;
+    left: 0;
+    display: block;
+    width: 7px;
+    height: 100%;
+    background-color: var(--accent-lime);
+    border-radius: 3px;
+    z-index: 3;
 }
 
 /* Active line (where cursor is) - celadon bar on gutter outline */
 #code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background {
     background-color: var(--bg-activeline) !important;
-    border-left: 7px solid var(--accent-cyan) !important;
+    border-left: none !important;
     border-radius: 3px !important;
+    overflow: visible !important;
+}
+
+#code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background::before {
+    content: '';
+    position: sticky;
+    left: 0;
+    display: block;
+    width: 7px;
+    height: 100%;
+    background-color: var(--accent-cyan);
+    border-radius: 3px;
+    z-index: 3;
 }
 
 /* Space between gutter and code text (like VS Code) */
 #code-editor-container .CodeMirror-line {
     padding-left: 0.9375rem !important;
+}
+
+/* Right breathing room - prevents long lines from touching the center partition */
+#code-editor-container .CodeMirror-lines {
+    padding-right: 1.5rem;
 }
 
 /* Python syntax colors */
@@ -1272,6 +1295,34 @@ body {
     color: var(--text-muted);
 }
 
+/* custom scrollbar - matches dark theme */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-element-hover);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-dim);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--bg-app);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-element-hover) var(--bg-app);
+}
+
 /* responsive media queries */
 @media (max-width: 900px) {
     body {
@@ -1304,8 +1355,9 @@ body {
         min-height: 12.5rem;
     }
 
-    .viz-canvas {
+    .viz-canvas {                   /* so that on smaller screens the bottom controls float and not block the animation */
         min-height: 12.5rem;
+        padding-bottom: 8rem;
     }
 
     .playback-deck {
@@ -1358,10 +1410,7 @@ body {
 
     .var-row.chip-changed {
         animation: none !important;
-    }
-
-    .var-row.chip-changed .var-value {
-        animation: none !important;
+        box-shadow: inset 3px 0 0 0 var(--accent-lime) !important;
     }
 
     #code-editor-container .trace-highlight-line {
