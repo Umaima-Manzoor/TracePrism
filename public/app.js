@@ -159,6 +159,7 @@ function highlightLine(lineNumber) {
     // clear previous highlight
     if (AppState.highlightedLine !== null) {
         cm.removeLineClass(AppState.highlightedLine, 'background', 'trace-highlight-line');
+        cm.removeLineClass(AppState.highlightedLine, 'gutter', 'trace-highlight-gutter');
     }
 
     if (lineNumber === null || lineNumber <= 0) {
@@ -171,9 +172,12 @@ function highlightLine(lineNumber) {
     const cmLine = lineNumber - 1;
     if (cmLine >= 0 && cmLine <= cm.lastLine()) {
         cm.addLineClass(cmLine, 'background', 'trace-highlight-line');
+        cm.addLineClass(cmLine, 'gutter', 'trace-highlight-gutter');
         AppState.highlightedLine = cmLine;
         // Only auto-scroll editor on desktop (prevents mobile jump to code pane)
         if (window.innerWidth > 900) {
+            // Force horizontal scroll back to column 0 so the start of the line is visible
+            cm.scrollTo(0, null);
             cm.scrollIntoView({ line: cmLine, ch: 0 }, 100);
         }
         updateEditingHighlightVisibility();     // hide blue if it would collide with peach
