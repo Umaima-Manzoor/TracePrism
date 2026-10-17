@@ -191,14 +191,6 @@ html, body {
     display: none;
 }
 
-/* groups status tag + stale indicator on right side of pane header */
-.pane-header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-
 /* shortcuts button in topbar */
 .topbar-actions {
     display: flex;
@@ -869,20 +861,6 @@ html, body {
     gap: 4px;
 }
 
-.kbd-hint {
-    font-size: 14px;
-    color: var(--text-dim);
-    cursor: help;
-    margin-left: 8px;
-    opacity: 0.5;
-    transition: opacity var(--transition-fast);
-}
-
-.kbd-hint:hover {
-    opacity: 1;
-    color: var(--text-muted);
-}
-
 .btn {
     display: inline-flex;
     align-items: center;
@@ -1396,10 +1374,6 @@ html, body {
 
     .var-row.chip-changed .var-value {
         animation: none !important;
-    }
-
-    .line-highlight {
-        transition: none !important;
     }
 
     #code-editor-container .trace-highlight-line {

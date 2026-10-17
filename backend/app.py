@@ -27,7 +27,7 @@ limiter = Limiter(
     key_func=get_client_ip,
     app=app,
     default_limits=["100 per minute"],
-    storage_uri="memory://"
+    storage_uri="memory://"    # works on local dev; on Vercel serverless, memory resets per invocation - real protection comes from 5s timeout + 50k step limit + Vercel edge
 )
 
 tracer = Tracer()
