@@ -224,9 +224,13 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    // Esc to close modal
+    // Esc closes the shortcuts modal, or clears keyboard focus elsewhere
     if (e.key === 'Escape') {
-        closeShortcutsModal();
+        if (!DOM.shortcutsModal.classList.contains('hidden')) {
+            closeShortcutsModal();
+        } else if (document.activeElement instanceof HTMLElement) {     // modal closed and some other element is focused
+            document.activeElement.blur();
+        }
         return;
     }
 
