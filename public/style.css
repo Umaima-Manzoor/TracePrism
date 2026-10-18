@@ -956,7 +956,11 @@ body {
     transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
-.btn:active {
+.btn:active, .btn.is-pressed {
+    transform: translateY(1px);
+}
+
+.btn-deck:active, .btn-deck.is-pressed {
     transform: translateY(1px);
 }
 

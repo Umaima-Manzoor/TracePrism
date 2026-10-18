@@ -208,6 +208,21 @@ DOM.speedSelect.addEventListener('change', (e) => {
     }
 });
 
+// Simulate :active press animation for keyboard activation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        const btn = e.target.closest('.btn, .btn-deck, .btn-clear, .btn-shortcuts');
+        if (btn) btn.classList.add('is-pressed');
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        const btn = e.target.closest('.btn, .btn-deck, .btn-clear, .btn-shortcuts');
+        if (btn) btn.classList.remove('is-pressed');
+    }
+});
+
 // Global Keyboard Shortcuts
 window.addEventListener('keydown', (e) => {
     // Ctrl+Enter or Cmd+Enter to run trace from anywhere
