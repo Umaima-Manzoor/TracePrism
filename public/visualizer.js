@@ -271,7 +271,7 @@ function renderStep(stepIndex) {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
 
-            // Show return value inline on the active frame when it's returning
+            // Build external return badge for active frame on return event
             let returnBadge = '';
             if (isActive && snapshot.event === 'return') {
                 const retFormatted = formatVariableValue(snapshot.return_value);
@@ -279,12 +279,19 @@ function renderStep(stepIndex) {
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;');
-                returnBadge = `<span class="frame-return">→ ${safeRetVal}</span>`;
+                returnBadge = `
+                    <span class="frame-return-badge">
+                        <span class="frame-return-arrow">→</span>
+                        <span class="frame-return-value">${safeRetVal}</span>
+                    </span>
+                `;
             }
 
             framesHTML += `
-                <div class="stack-frame${activeClass}${animClass}" title="${safeFuncName}">
-                    <span class="frame-func">${safeFuncName}</span>
+                <div class="stack-frame-row">
+                    <div class="stack-frame${activeClass}${animClass}" title="${safeFuncName}">
+                        <span class="frame-func">${safeFuncName}</span>
+                    </div>
                     ${returnBadge}
                 </div>
             `;
