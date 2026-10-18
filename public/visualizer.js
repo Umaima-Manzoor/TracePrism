@@ -248,37 +248,6 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // RETURN VALUE SECTION (shown only on 'return' event snapshots)
-    let returnHTML = '';
-    if (snapshot.event === 'return') {
-        const retVal = snapshot.return_value;
-        const retType = getVariableType(retVal);
-        const retFormatted = formatVariableValue(retVal);
-        const safeRetVal = retFormatted
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-        const funcName = snapshot.func_name || 'main';
-        const safeFunc = funcName
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-
-        returnHTML = `
-            <div class="viz-section">
-                <div class="viz-section-label">Return Value</div>
-                <div class="var-rows">
-                    <div class="var-row chip-changed" data-type="${retType}">
-                        <span class="var-type-tag">[${retType}]</span>
-                        <span class="var-name">${safeFunc}</span>
-                        <span class="var-return-arrow">→</span>
-                        <span class="var-value">${safeRetVal}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     // CALL STACK SECTION (grows upward, new frames on top, bold ➤ arrow)
     let stackHTML = '';
     const stack = snapshot.stack || [];
@@ -302,9 +271,21 @@ function renderStep(stepIndex) {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
 
+            // Show return value inline on the active frame when it's returning
+            let returnBadge = '';
+            if (isActive && snapshot.event === 'return') {
+                const retFormatted = formatVariableValue(snapshot.return_value);
+                const safeRetVal = retFormatted
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                returnBadge = `<span class="frame-return">→ ${safeRetVal}</span>`;
+            }
+
             framesHTML += `
                 <div class="stack-frame${activeClass}${animClass}" title="${safeFuncName}">
                     <span class="frame-func">${safeFuncName}</span>
+                    ${returnBadge}
                 </div>
             `;
         }
@@ -374,10 +355,6 @@ function renderStep(stepIndex) {
     // UPDATE STATUS MODE TAG
     if (snapshot.exception) {
         DOM.vizMode.innerText = 'EXCEPTION';
-    } else if (returnHTML && stackHTML) {
-        DOM.vizMode.innerText = 'RETURN + STACK';
-    } else if (returnHTML) {
-        DOM.vizMode.innerText = 'RETURN';
     } else if (varsHTML && stackHTML) {
         DOM.vizMode.innerText = 'VARS + STACK';
     } else if (stackHTML) {
@@ -396,7 +373,7 @@ function renderStep(stepIndex) {
     const prevScrollTop = prevBlock ? prevBlock.scrollTop : 0;
 
     // Inject HTML
-    DOM.vizCanvas.innerHTML = varsHTML + returnHTML + stackHTML + outputHTML + errorOverlayHTML;
+    DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
     // Restore state and set up handlers (nested expand handled by delegation at bottom)
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
