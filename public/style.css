@@ -537,7 +537,7 @@ body {
     flex-shrink: 0;
 }
 
-/* Variable change indicator — subtle background tint + left bar */
+/* Variable change indicator - subtle background tint + left bar */
 @keyframes varChangeIndicator {
     0% {
         background-color: rgba(var(--accent-lime-rgb), 0.12);
@@ -1136,14 +1136,14 @@ body {
     background-color: rgba(var(--accent-lime-rgb), 0.2);
 }
 
-/* Trace execution line highlight — peach left border, full-row background */
+/* Trace execution line highlight - peach left border, full-row background */
 #code-editor-container .CodeMirror-linebackground.trace-highlight-line {
     background-color: var(--bg-element) !important;
     border-left: 7px solid var(--accent-lime) !important;
     border-radius: 3px !important;
 }
 
-/* Active line background tint — celadon left border, full-row background */
+/* Active line background tint - celadon left border, full-row background */
 #code-editor-container .CodeMirror-linebackground.CodeMirror-activeline-background {
     background-color: var(--bg-activeline) !important;
     border-left: 7px solid var(--accent-cyan) !important;
@@ -1356,7 +1356,18 @@ body {
     color: var(--text-muted);
 }
 
-/* custom scrollbar — matches dark theme */
+/* keyboard focus indicator - teal outline, visible on dark and peach */
+:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+}
+
+/* remove outline for mouse/touch clicks (only show for keyboard) */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* custom scrollbar - matches dark theme */
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -1382,7 +1393,7 @@ body {
     background-color: var(--bg-app);
 }
 
-/* CodeMirror has its own scroll container with inline styles — override */
+/* CodeMirror has its own scroll container with inline styles - override */
 .CodeMirror-scrollbar-filler,
 .CodeMirror-gutter-filler {
     background-color: var(--bg-pane) !important;
@@ -1495,5 +1506,24 @@ body {
 
     .output-block {
         transition: none !important;
+    }
+
+    .frame-return-badge {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .frame-return-arrow {
+        animation: none !important;
+    }
+
+    .frame-return-arrow::before {
+        animation: none !important;
+        transform: scaleX(1) !important;
+    }
+
+    .loading-spinner {
+        animation: none !important;
     }
 }

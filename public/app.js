@@ -228,12 +228,34 @@ DOM.speedSelect.addEventListener('blur', () => {
 });
 
 //shortcuts modal
+function trapModalFocus(e) {                // function runs on every keypress while the modal is open
+    if (e.key !== 'Tab') return;            // any key other than Tab - skip
+    const focusable = DOM.shortcutsModal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );      // list of every selectable thing (right now only the x button)
+    if (focusable.length === 0) return;         // nothing to trap if there's nothing
+    const first = focusable[0];                         // two edges of the screen - in this case, both are the same - x button
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+    }
+}
+
 function openShortcutsModal() {
     DOM.shortcutsModal.classList.remove('hidden');
+    DOM.btnCloseShortcuts.focus();          // move focus to the modal
+    DOM.shortcutsModal.addEventListener('keydown', trapModalFocus);
 }
 
 function closeShortcutsModal() {
+    if (DOM.shortcutsModal.classList.contains('hidden')) return;    // already closed, do nothing
     DOM.shortcutsModal.classList.add('hidden');
+    DOM.shortcutsModal.removeEventListener('keydown', trapModalFocus);
+    DOM.btnShortcuts.focus();
 }
 
 DOM.btnShortcuts.addEventListener('click', openShortcutsModal);
