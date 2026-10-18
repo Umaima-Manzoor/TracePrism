@@ -41,7 +41,7 @@
         <!-- Main Workspace (Grid: Left Editor, Right Unified Canvas) -->
         <main class="workspace">
             <!-- Left Pane: Code Input & Line Stepper -->
-            <section class="editor-pane">
+            <section class="editor-pane" aria-label="Code Editor">
                 <div class="pane-header">
                     <span class="pane-title">source.py</span>
                     <span id="stale-indicator" class="stale-tag hidden">◆ code modified</span>
@@ -54,12 +54,12 @@
             </section>
 
             <!-- Right Pane: Unified Adaptive Canvas (vars, stack, arrays, trees all render here) -->
-            <section class="canvas-pane">
+            <section class="canvas-pane" aria-label="Execution Canvas">
                 <div class="pane-header">
                     <button id="btn-clear" class="btn-clear">Clear</button>
                     <span id="viz-mode" class="status-tag tag-accent">IDLE</span>
                 </div>
-                <div id="viz-canvas" class="viz-canvas">
+                <div id="viz-canvas" class="viz-canvas" aria-live="polite" aria-atomic="false">     <!-- annouces content changes when the user is idle (not interrupting) - only annouces changed values, not everything-->
                     <div class="canvas-placeholder">
                         <span class="placeholder-title">No Active Execution</span>
                         <span class="placeholder-sub">Click "Run Trace" to visualize runtime execution</span>
@@ -80,13 +80,13 @@
 
             <!-- Progress Scrubber -->
             <div class="scrubber-container">
-                <input type="range" id="timeline-slider" class="scrubber-track" min="0" max="0" value="0">
+                <input type="range" id="timeline-slider" class="scrubber-track" min="0" max="0" value="0" aria-label="Timeline scrubber">
             </div>
 
             <!-- Step Counter & Speed Control -->
             <div class="deck-meta">
                 <span id="step-counter" class="step-counter">0 / 0</span>
-                <select id="speed-select" class="speed-dropdown">
+                <select id="speed-select" class="speed-dropdown" aria-label="Playback speed">
                     <option value="1200">0.5x</option>
                     <option value="600" selected>1.0x</option>
                     <option value="300">2.0x</option>
@@ -97,13 +97,13 @@
     </div>
 
     <!-- Keyboard Shortcuts Modal -->
-    <div id="shortcuts-modal" class="shortcuts-modal hidden">
+    <div id="shortcuts-modal" class="shortcuts-modal hidden" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts">       <!-- tells the screen reader this is a modal dialog not regular page content, aria-modal:True - declaration that this dialog is inert, the user shouldn't be able to interact with the page behind it -->
         <div class="shortcuts-modal-backdrop"></div>
         <div class="shortcuts-modal-content">
             <div class="shortcuts-modal-header">
                 <span class="shortcuts-modal-title">Keyboard Shortcuts</span>
-                <button id="btn-close-shortcuts" class="btn-close-shortcuts">
-                    <span class="close-x"></span>
+                <button id="btn-close-shortcuts" class="btn-close-shortcuts" aria-label="Close shortcuts">
+                    <span class="close-x" aria-hidden="true"></span>        <!-- tell the screen reader to ignore the decorative span (it doesn't have any text anyway) -->
                 </button>
             </div>
             <div class="shortcuts-modal-body">
