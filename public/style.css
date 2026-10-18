@@ -471,6 +471,11 @@ body {
     color: var(--text-equals);
 }
 
+.var-return-arrow {
+    margin: 0 0.375rem;
+    color: var(--accent-coral);
+}
+
 .var-value {
     font-weight: 500;
     overflow: hidden;
