@@ -5,7 +5,13 @@ import sys  # for sys.settrace
 import time  # for 5-sec execution timeout check
 from typing import ClassVar  # for marking class-level constants
 
-class Tracer:
+try:
+    from backend.tracers.base import BaseTracer     # for vercel
+except ImportError:
+    from tracers.base import BaseTracer         # for local dev
+
+
+class PythonTracer(BaseTracer):
 
     BLOCKED_MODULES: ClassVar[set] = { 'os', 'subprocess', 'socket', 'shutil', 'sys', 'pathlib', 'ctypes', 'pickle', 'marshal', 'code', 'codeop', 'importlib', 'multiprocessing', 'threading', 'signal' }
 
@@ -253,7 +259,7 @@ class Tracer:
             line_no = tb.extract_tb(sys.exc_info()[2])[-1].lineno if sys.exc_info()[2] else None
             error_info = {
                 'error_type': type(e).__name__,
-                'message': str(e),
+                'message': 'An unexpected error occurred during execution.',
                 'line': line_no,
             }
         finally:
