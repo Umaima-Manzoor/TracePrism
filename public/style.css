@@ -308,13 +308,8 @@ body {
     color: var(--text-on-peach);
 }
 
-.canvas-pane.canvas-active .var-colon,
 .canvas-pane.canvas-active .var-equals {
     color: var(--text-on-peach-dim);
-}
-
-.canvas-pane.canvas-active .var-type {
-    color: var(--text-on-peach-muted);
 }
 
 .canvas-pane.canvas-active .frame-func {
