@@ -476,12 +476,8 @@ body {
     cursor: pointer;
 }
 
-/* Expanded state: click to see full value */
-.var-value.expanded {
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 12.5rem;
-    overflow-y: auto;
+.var-value[data-nested="true"].expanded::after {
+    content: ' ⌃';
 }
 
 /* Nested structure compact indicator */
