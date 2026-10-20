@@ -135,7 +135,6 @@ def trace_code():
         'snapshots': compressed_snapshots,
         'total_steps': raw_result['total_steps'],
         'error': raw_result.get('error'),
-        'cached': True,
         'output': raw_result.get('output', ''),
     }
     if len(CACHE) > CACHE_MAX_SIZE:
@@ -147,7 +146,6 @@ def trace_code():
 # universal route handler
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'OPTIONS'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
-@limiter.limit("100 per minute", methods=["POST"])
 def universal_handler(path):
     if request.method == 'OPTIONS':
         return '', 204
