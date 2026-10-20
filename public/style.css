@@ -452,15 +452,6 @@ body {
     flex-shrink: 0;
 }
 
-.var-type {
-    font-size: 0.625rem;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-right: 0.5rem;
-    letter-spacing: 0.5px;
-    flex-shrink: 0;
-}
-
 .var-equals {
     margin: 0 0.375rem;
     color: var(--text-equals);
@@ -869,21 +860,6 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-@keyframes framePop {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-}
-
-.stack-frame.popping {
-    animation: framePop 240ms var(--ease-out-soft) forwards;
 }
 
 /* playback deck */
@@ -1446,12 +1422,7 @@ body {
         opacity: 1 !important;
         transform: none !important;
     }
-
-    .stack-frame.popping {
-        animation: none !important;
-        display: none !important;
-    }
-
+    
     .var-row.chip-changed {
         animation: none !important;
         box-shadow: inset 4px 0 0 0 var(--chip-color) !important;
