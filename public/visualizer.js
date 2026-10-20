@@ -356,7 +356,6 @@ function renderStep(stepIndex) {
                 <div class="error-overlay-suggestion">${suggestion}</div>
             </div>
         `;
-        DOM.vizMode.innerText = 'EXCEPTION';
     }
 
     // UPDATE STATUS MODE TAG

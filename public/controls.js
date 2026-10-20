@@ -96,7 +96,7 @@ async function runTrace() {
         DOM.btnTrace.innerText = 'Run Trace';
         // Re-evaluate staleness: user may have edited during the fetch
         const currentCode = AppState.editor ? AppState.editor.getValue() : '';
-        AppState.isStale = currentCode !== AppState.tracedCode;
+        AppState.isStale = normalizeCodeForComparison(currentCode) !== normalizeCodeForComparison(AppState.tracedCode);
         DOM.staleIndicator.classList.toggle('hidden', !AppState.isStale);
     }
 }
