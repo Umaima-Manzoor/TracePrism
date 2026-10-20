@@ -496,30 +496,18 @@ body {
 }
 
 /* Type Specific Text Colors (value + tag combined) */
-.var-row[data-type="int"] .var-value,
-.var-row[data-type="int"] .var-type-tag { color: var(--type-int); }
+.var-row[data-type="int"]      { --type-color: var(--type-int); }
+.var-row[data-type="float"]    { --type-color: var(--type-float); }
+.var-row[data-type="str"]      { --type-color: var(--type-str); }
+.var-row[data-type="bool"]     { --type-color: var(--type-bool); }
+.var-row[data-type="list"],
+.var-row[data-type="tuple"]    { --type-color: var(--type-list); }
+.var-row[data-type="dict"],
+.var-row[data-type="set"]      { --type-color: var(--type-dict); }
+.var-row[data-type="NoneType"] { --type-color: var(--type-none); }
 
-.var-row[data-type="float"] .var-value,
-.var-row[data-type="float"] .var-type-tag { color: var(--type-float); }
-
-.var-row[data-type="str"] .var-value,
-.var-row[data-type="str"] .var-type-tag { color: var(--type-str); }
-
-.var-row[data-type="bool"] .var-value,
-.var-row[data-type="bool"] .var-type-tag { color: var(--type-bool); }
-
-.var-row[data-type="list"] .var-value,
-.var-row[data-type="list"] .var-type-tag,
-.var-row[data-type="tuple"] .var-value,
-.var-row[data-type="tuple"] .var-type-tag { color: var(--type-list); }
-
-.var-row[data-type="dict"] .var-value,
-.var-row[data-type="dict"] .var-type-tag,
-.var-row[data-type="set"] .var-value,
-.var-row[data-type="set"] .var-type-tag { color: var(--type-dict); }
-
-.var-row[data-type="NoneType"] .var-value,
-.var-row[data-type="NoneType"] .var-type-tag { color: var(--type-none); }
+.var-row .var-value,
+.var-row .var-type-tag { color: var(--type-color); }
 
 /* Gap between [type] tag and variable name */
 .var-type-tag {
@@ -529,40 +517,24 @@ body {
 }
 
 /* Variable change indicator - subtle background tint + left bar */
-@keyframes varChangeIndicator {
-    0% {
-        background-color: rgba(var(--accent-lime-rgb), 0.12);
-        box-shadow: inset 4px 0 0 0 var(--accent-lime);
-    }
-    70% {
-        background-color: rgba(var(--accent-lime-rgb), 0.12);
-        box-shadow: inset 4px 0 0 0 var(--accent-lime);
-    }
-    100% {
-        background-color: transparent;
-        box-shadow: inset 4px 0 0 0 transparent;
-    }
-}
-
 .var-row.chip-changed {
+    --chip-bg: rgba(var(--accent-lime-rgb), 0.12);
+    --chip-color: var(--accent-lime);
     animation: varChangeIndicator 1400ms var(--ease-out-soft);
     padding-left: 0.5rem;
     border-radius: var(--radius-sm);
 }
 
-/* On peach canvas, use coral so the indicator is visible against the peach bg */
 .canvas-pane.canvas-active .var-row.chip-changed {
-    animation: varChangeIndicatorPeach 900ms var(--ease-out-soft);
+    --chip-bg: rgba(192, 122, 114, 0.2);
+    --chip-color: var(--accent-coral);
+    animation-duration: 900ms;
 }
 
-@keyframes varChangeIndicatorPeach {
-    0% {
-        background-color: rgba(192, 122, 114, 0.2);
-        box-shadow: inset 4px 0 0 0 var(--accent-coral);
-    }
-    70% {
-        background-color: rgba(192, 122, 114, 0.2);
-        box-shadow: inset 4px 0 0 0 var(--accent-coral);
+@keyframes varChangeIndicator {
+    0%, 70% {
+        background-color: var(--chip-bg);
+        box-shadow: inset 4px 0 0 0 var(--chip-color);
     }
     100% {
         background-color: transparent;
@@ -1482,8 +1454,8 @@ body {
 
     .var-row.chip-changed {
         animation: none !important;
-        box-shadow: inset 4px 0 0 0 var(--accent-lime) !important;
-        background-color: rgba(var(--accent-lime-rgb), 0.12) !important;
+        box-shadow: inset 4px 0 0 0 var(--chip-color) !important;
+        background-color: var(--chip-bg) !important;
         padding-left: 0.5rem !important;
     }
 
