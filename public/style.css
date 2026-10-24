@@ -328,6 +328,12 @@ body {
     color: var(--text-on-peach-muted);
 }
 
+.canvas-pane.canvas-active .status-tag {
+    color: var(--text-on-peach);
+    background-color: rgba(42, 31, 20, 0.08);
+    border-color: var(--text-on-peach-dim);
+}
+
 .canvas-pane.canvas-active .stack-frames {
     border-color: var(--text-on-peach-dim);
 }
@@ -476,6 +482,12 @@ body {
     cursor: pointer;
 }
 
+.var-value[data-nested="true"]:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--text-dim);
+    text-underline-offset: 2px;
+}
+
 .var-value[data-nested="true"]::after {
     content: ' ⌄';
     font-size: 0.625rem;
@@ -499,6 +511,11 @@ body {
 
 .var-row .var-value,
 .var-row .var-type-tag { color: var(--type-color); }
+
+/* Peach canvas: override type colors for legibility on light background */
+.canvas-pane.canvas-active .var-row {
+    --type-color: var(--text-on-peach);
+}
 
 /* Gap between [type] tag and variable name */
 .var-type-tag {
@@ -556,6 +573,7 @@ body {
 
 .output-block.no-hint {
     border-radius: var(--radius-md);
+    cursor: default;
 }
 
 .output-block pre {
@@ -792,6 +810,12 @@ body {
     font-size: 0.8125rem;
     font-weight: 600;
     white-space: nowrap;
+    animation: returnBadgeFade 300ms var(--ease-out-soft) both;
+}
+
+@keyframes returnBadgeFade {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 .frame-return-arrow {
@@ -988,6 +1012,11 @@ body {
     background: var(--accent-lime);
     border: none;
     cursor: pointer;
+}
+
+.scrubber-track:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 4px;
 }
 
 .deck-meta {
