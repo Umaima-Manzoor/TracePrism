@@ -328,12 +328,6 @@ body {
     color: var(--text-on-peach-muted);
 }
 
-.canvas-pane.canvas-active .status-tag {
-    color: var(--text-on-peach);
-    background-color: rgba(42, 31, 20, 0.08);
-    border-color: var(--text-on-peach-dim);
-}
-
 .canvas-pane.canvas-active .stack-frames {
     border-color: var(--text-on-peach-dim);
 }
@@ -411,6 +405,10 @@ body {
     font-weight: 500;
     color: var(--text-muted);
     letter-spacing: 0.5px;
+}
+
+.canvas-pane.canvas-active .loading-text {
+    color: var(--text-on-peach);
 }
 
 /* canvas renderers */
@@ -511,11 +509,6 @@ body {
 
 .var-row .var-value,
 .var-row .var-type-tag { color: var(--type-color); }
-
-/* Peach canvas: override type colors for legibility on light background */
-.canvas-pane.canvas-active .var-row {
-    --type-color: var(--text-on-peach);
-}
 
 /* Gap between [type] tag and variable name */
 .var-type-tag {
