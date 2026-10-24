@@ -13,6 +13,7 @@ async function runTrace() {
     // UI loading state and disabling button
     DOM.btnTrace.disabled = true;
     DOM.btnTrace.innerText = 'Tracing...';
+    DOM.btnTrace.classList.add('btn-loading');
     DOM.stepIndicator.innerText = 'RUNNING';
 
     // Pause active playback if running
@@ -94,6 +95,7 @@ async function runTrace() {
     } finally {
         DOM.btnTrace.disabled = false;
         DOM.btnTrace.innerText = 'Run Trace';
+        DOM.btnTrace.classList.remove('btn-loading');
         // Re-evaluate staleness: user may have edited during the fetch
         const currentCode = AppState.editor ? AppState.editor.getValue() : '';
         AppState.isStale = normalizeCodeForComparison(currentCode) !== normalizeCodeForComparison(AppState.tracedCode);
