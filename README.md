@@ -1,147 +1,163 @@
+<div align="center">
+
 # TracePrism
 
-Refracting complex code execution into clear, animated understanding.
+> *Refracting complex code execution into clear, animated understanding.*
 
-**Live:** [traceprism.runs-on.dev](https://traceprism.runs-on.dev)
+**[Live Demo →](https://traceprism.runs-on.dev)** &nbsp;·&nbsp; **[How It Works](#how-it-works)** &nbsp;·&nbsp; **[Architecture](#architecture)**
 
-TracePrism is a Python code visualization tool that lets you write code in the browser and watch it execute step by step. Every variable change, function call, stack frame, and return value is rendered on an animated canvas. Built to help CS students see what their code actually does at runtime.
+<br>
 
----
+![TracePrism Demo](assets/demo.gif)
 
-## What It Does
+*Step through Python code and watch variables, stacks, and return values animate in real time.*
 
-1. Write Python in the left pane (CodeMirror editor with syntax highlighting)
-2. Click **Run Trace** or press **Ctrl+Enter**
-3. The right pane lights up and walks through your code one step at a time
-4. Variables appear and update with type-colored values
-5. The call stack grows and shrinks as functions are called and return
-6. Return values animate outward from the stack with an extending arrow
-7. Use the playback controls to step forward, backward, scrub the timeline, or auto-play at adjustable speed
+</div>
 
 ---
 
-## Features
+## The Problem
 
-**Editor**
-- CodeMirror 5 with Python syntax highlighting and autocomplete
-- Active line highlighting with collision detection against trace highlights
-- Stale indicator warns when code has changed since the last trace (ignores whitespace-only edits)
+You write a recursive function. It returns the wrong answer. You stare at the code. You add `print()` statements. You lose track of which call is which. You start over.
 
-**Execution**
-- Step-by-step tracing via Python `sys.settrace`
-- Delta compression with keyframes every 100 steps for efficient playback
-- 5-second timeout and 50,000-step limit to prevent infinite loops
-- SHA-256 code hashing with LRU cache (256 entries) for instant re-runs
-- Print output capture and display
+**TracePrism fixes this.** Paste your code, hit Run, and watch every step unfold on an animated canvas — variables light up when they change, the call stack grows and shrinks, and return values fly out with spring-animated arrows.
 
-**Visualization**
-- Variable table with per-type coloring (int, float, str, bool, list, tuple, dict, set, None)
-- Expandable nested structures (click long values to pretty-print)
-- Call stack rendered in reverse order (newest frame on top)
-- Return value badges with spring-animated arrows
-- Error overlays with contextual suggestions for 14 common Python exceptions
+---
 
-**Playback**
-- Play, pause, step forward, step back, jump to first/last
-- Timeline scrubber with keyboard focus indicator
-- Speed control: 0.5x, 1x, 2x, 4x
-- Full keyboard shortcut system (press `Ctrl+,` to see all)
+## How It Works
 
-**Accessibility**
-- ARIA live regions, labels, and dialog roles
-- `:focus-visible` outlines on all interactive elements
-- `prefers-reduced-motion` disables all animations
-- Keyboard-navigable playback and modal
+```
+  You type Python          TracePrism shows you
+  ───────────────          ────────────────────
+
+  def fib(n):              ► Line 3 highlighted (peach border)
+      if n <= 1:           ► Variables: [int] n = 5 (orange flash)
+          return n         ► Stack: fib(5) → fib(4) → fib(3)
+      return fib(n-1)      ► Return badge: ← 3 (animated arrow)
+           + fib(n-2)      ► Output: (captured prints)
+```
+
+No debuggers to configure. No IDE plugins to install. Just a browser.
+
+---
+
+## Features at a Glance
+
+<div align="center">
+
+| 🎨 Editor | ⚡ Execution | 📊 Visualization |
+|:---:|:---:|:---:|
+| CodeMirror 5 | `sys.settrace` | Type-colored variables |
+| Syntax highlighting | Delta compression | Animated call stack |
+| Stale detection | 50K step limit | Return value arrows |
+| Autocomplete | LRU cache | Error overlays |
+
+</div>
+
+**Playback controls** — Play · Pause · Step · Scrub · Speed (0.5x–4x)
+**Keyboard first** — `Ctrl+Enter` to run, `Space` to play/pause, `←→` to step, `Ctrl+,` for all shortcuts
+**Accessible** — ARIA live regions, focus indicators, `prefers-reduced-motion` support
+
+---
+
+## Design
+
+TracePrism uses a warm earthy dark palette. No purple-blue gradients. No frosted glass. No AI-generated aesthetic.
+
+<div align="center">
+
+`#0e0f12` ████ &nbsp; `#16181e` ████ &nbsp; `#282a34` ████ &nbsp; `#ede8df` ████ &nbsp; `#ffd7a8` ████ &nbsp; `#5eead4` ████ &nbsp; `#c07a72` ████
+
+**Dark pane** · **Dark pane** · **Elements** · **Text** · **Peach canvas** · **Teal accent** · **Coral accent**
+
+</div>
+
+The canvas turns **peach** during execution so you always know whether you're editing or watching. Variable types get distinct colors — orange for `int`, green for `str`, purple for `dict` — readable on both dark and peach backgrounds.
 
 ---
 
 ## Architecture
 
 ```
-Frontend (static, Vercel CDN)        Backend (Flask, Vercel Serverless)
-+----------------------------+       +------------------------------+
-|  index.html                |       |  api/index.py (entry point)  |
-|  style.css                 | POST  |  backend/app.py (Flask)      |
-|  app.js (init + editor)    | ----> |  backend/python/tracer.py    |
-|  controls.js (playback)    | <---- |  backend/python/processor.py |
-|  visualizer.js (canvas)    | JSON  |  backend/tracers/registry.py |
-+----------------------------+       +------------------------------+
+┌─────────────── Frontend (Vercel CDN) ───────────────┐
+│                                                      │
+│   index.html ──► style.css ──► app.js                │
+│                                controls.js           │
+│                                visualizer.js         │
+│                                     │                │
+└─────────────────────────────────────┼────────────────┘
+                                      │ POST /api/trace
+                                      ▼
+┌─────────────── Backend (Serverless) ────────────────┐
+│                                                      │
+│   api/index.py ──► backend/app.py (Flask)            │
+│                        │                             │
+│                   TracerRegistry                     │
+│                        │                             │
+│                   PythonTracer                       │
+│                   (sys.settrace)                     │
+│                        │                             │
+│                   DeltaProcessor                     │
+│                   (keyframe compression)             │
+│                                                      │
+└──────────────────────────────────────────────────────┘
 ```
 
-The backend uses a **language router pattern** (`TracerRegistry`) so new languages can be added without modifying the core app. Each language gets its own tracer class inheriting from `BaseTracer`.
+The **TracerRegistry** pattern means adding a new language is 3 lines of code:
 
-**Adding a new language takes 3 steps:**
-1. Create `backend/<lang>/tracer.py` inheriting from `BaseTracer`
-2. Create `backend/<lang>/__init__.py`
-3. Register in `app.py`: `TracerRegistry.register('<lang>', YourTracer)`
+```python
+# backend/app.py
+TracerRegistry.register('python', PythonTracer)
+TracerRegistry.register('javascript', JavaScriptTracer)  # ← that's it
+```
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Editor | CodeMirror 5 |
-| Frontend | Vanilla HTML, CSS, JavaScript |
-| Backend | Python 3.12, Flask |
-| Deployment | Vercel (Fluid Compute, serverless) |
-| Domain | runs-on.dev (free subdomain registry) |
-| Rate Limiting | flask-limiter (100 req/min per IP) |
+<div align="center">
 
-No frameworks. No build step. No dependencies beyond Flask and its extensions.
+**Frontend** &nbsp;·&nbsp; Vanilla HTML / CSS / JS &nbsp;·&nbsp; CodeMirror 5
+**Backend** &nbsp;·&nbsp; Python 3.12 &nbsp;·&nbsp; Flask &nbsp;·&nbsp; flask-limiter
+**Infra** &nbsp;·&nbsp; Vercel Serverless &nbsp;·&nbsp; Fluid Compute &nbsp;·&nbsp; runs-on.dev
+
+</div>
+
+No React. No Tailwind. No build step. No `node_modules` black hole. Just files that work.
 
 ---
 
 ## Security
 
-The backend executes user-submitted Python code. Security measures in place:
+TracePrism runs arbitrary Python code from strangers on the internet. Here's how it stays safe:
 
-| Measure | Detail |
-|---------|--------|
-| Execution sandbox | Vercel microVM isolation per invocation |
-| Input limits | 1MB payload, 50KB code length |
-| Timeout | 5-second hard limit per execution |
-| Step limit | 50,000 trace steps maximum |
-| Rate limiting | 100 requests/minute per IP |
-| CORS | Restricted to verified origins via environment variable |
-| Error handling | Generic messages for unexpected errors (no internal leakage) |
-| Content-Type | Enforced `application/json` (415 on mismatch) |
-| Instance isolation | Fresh tracer per request (no shared state) |
-| Debug mode | Disabled in production |
-
----
-
-## Design
-
-Warm earthy dark palette with a peach canvas accent during execution.
-
-- **Dark pane:** `#0e0f12` background, `#ede8df` text
-- **Peach canvas:** `#ffd7a8` background, `#2a1f14` text
-- **Accents:** Celadon teal (`#5eead4`) for active line, peach (`#ffd7a8`) for trace highlights
-- **Fonts:** Outfit (UI), JetBrains Mono (code)
-- **No AI-slop patterns:** No gradients, no frosted glass, no glowing halos, no pill badges
+| Layer | Protection |
+|---|---|
+| 🏗️ **Isolation** | Vercel microVM per invocation — each request runs in its own sandbox |
+| 📏 **Input limits** | 1MB payload · 50KB code · 5s timeout · 50K steps |
+| 🚦 **Rate limiting** | 100 req/min per IP via flask-limiter |
+| 🔒 **CORS** | Allowlist-only via `CORS_ORIGINS` env var |
+| 🤫 **Error handling** | Generic messages for unexpected errors — no stack traces, no file paths |
+| 🧊 **Instance isolation** | Fresh tracer per request — no shared state between users |
+| 🚫 **Debug mode** | `debug=False` in production — no Werkzeug console |
 
 ---
 
 ## Run Locally
 
-**Prerequisites:** Python 3.10+, Node.js (for Vercel CLI, optional)
-
 ```bash
 git clone https://github.com/Umaima-Manzoor/TracePrism.git
 cd TracePrism
-
 pip install -r requirements.txt
 
-cd backend
-python app.py
+# Terminal 1 — backend
+cd backend && python app.py
 
-# In a separate terminal:
-cd public
-python -m http.server 3000
+# Terminal 2 — frontend
+cd public && python -m http.server 3000
 ```
 
-Open `http://localhost:3000` in your browser.
+Open **http://localhost:3000** and start tracing.
 
 ---
 
@@ -149,28 +165,43 @@ Open `http://localhost:3000` in your browser.
 
 ```
 TracePrism/
-├── api/
-│   └── index.py
+├── api/index.py                 # Vercel entry point
 ├── backend/
-│   ├── app.py
+│   ├── app.py                   # Flask routes + security middleware
 │   ├── tracers/
-│   │   ├── base.py
-│   │   └── registry.py
+│   │   ├── base.py              # BaseTracer ABC (contract for all languages)
+│   │   └── registry.py          # Language → tracer mapping
 │   └── python/
-│       ├── tracer.py
-│       └── processor.py
+│       ├── tracer.py            # PythonTracer (sys.settrace engine)
+│       └── processor.py         # DeltaProcessor (keyframe compression)
 ├── public/
-│   ├── index.html
-│   ├── style.css
-│   ├── app.js
-│   ├── controls.js
-│   └── visualizer.js
+│   ├── index.html               # App shell + ARIA landmarks
+│   ├── style.css                # ~1400 lines, warm earthy theme
+│   ├── app.js                   # Editor init + stale indicator
+│   ├── controls.js              # Playback + keyboard shortcuts
+│   └── visualizer.js            # Canvas rendering engine
+├── assets/
+│   └── demo.gif                 # Demo recording
 ├── requirements.txt
 └── vercel.json
 ```
 
 ---
 
-## License
+## What's Next
 
-MIT
+- [ ] Recursion tree visualization (branching call diagrams)
+- [ ] JavaScript and C++ tracer support
+- [ ] User accounts + saved traces (Oracle Cloud + PostgreSQL)
+- [ ] Breakpoints (click gutter to pause at specific lines)
+- [ ] Shareable trace URLs
+
+---
+
+<div align="center">
+
+**Built by [Umaima Manzoor](https://github.com/Umaima-Manzoor)** for CS transfer applications.
+
+*If this helped you understand your code, star the repo — it helps more than you think.* ⭐
+
+</div>

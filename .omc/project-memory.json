@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1792853132787,
+  "projectRoot": "D:\\TracePrism",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Python",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "requirements.txt"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "pip",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "api": {
+      "path": "api",
+      "purpose": "API routes",
+      "fileCount": 1,
+      "lastAccessed": 1792853132644,
+      "keyFiles": [
+        "index.py"
+      ]
+    },
+    "backend": {
+      "path": "backend",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1792853132646,
+      "keyFiles": [
+        "app.py",
+        "__init__.py"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 5,
+      "lastAccessed": 1792853132647,
+      "keyFiles": [
+        "app.js",
+        "controls.js",
+        "index.html",
+        "style.css",
+        "visualizer.js"
+      ]
+    },
+    "venv": {
+      "path": "venv",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1792853132652,
+      "keyFiles": [
+        "pyvenv.cfg"
+      ]
+    },
+    "venv\\Lib": {
+      "path": "venv\\Lib",
+      "purpose": "Library code",
+      "fileCount": 0,
+      "lastAccessed": 1792853132658,
+      "keyFiles": []
+    },
+    "venv\\Scripts": {
+      "path": "venv\\Scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 13,
+      "lastAccessed": 1792853132671,
+      "keyFiles": [
+        "activate",
+        "activate.bat",
+        "Activate.ps1"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}
