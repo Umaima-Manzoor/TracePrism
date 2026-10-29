@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/logo.svg" alt="TracePrism Logo" width="120" />
+
 # TracePrism
 
 > *Refracting complex code execution into clear, animated understanding.*
@@ -200,7 +202,7 @@ TracePrism/
 
 <div align="center">
 
-**Built by [Umaima Manzoor](https://github.com/Umaima-Manzoor)** for CS transfer applications.
+**Built by [Umaima Manzoor](https://github.com/Umaima-Manzoor)**
 
 *If this helped you understand your code, star the repo — it helps more than you think.* ⭐
 
