@@ -15,7 +15,37 @@ class PythonTracer(BaseTracer):
 
     BLOCKED_MODULES: ClassVar[set] = { 'os', 'subprocess', 'socket', 'shutil', 'sys', 'pathlib', 'ctypes', 'pickle', 'marshal', 'code', 'codeop', 'importlib', 'multiprocessing', 'threading', 'signal' }
 
-    BLOCKED_BUILTINS: ClassVar[set] = { 'exec', 'eval', 'compile', 'open', 'input', 'breakpoint', 'globals', 'locals', 'vars', 'dir' }
+    BLOCKED_BUILTINS: ClassVar[set] = { 'exec', 'eval', 'compile', 'open', 'input', 'breakpoint', 'globals', 'locals', 'vars', 'dir', 'getattr', 'hasattr', 'setattr', 'delattr' }
+
+    # dunder attribute names that reach interpreter internals and enable sandbox escape
+    BLOCKED_ATTRS: ClassVar[set] = {
+        '__class__', '__mro__', '__subclasses__', '__bases__', '__mro_entries__',
+        '__globals__', '__closure__', '__code__', '__defaults__', '__kwdefaults__',
+        '__dict__', '__builtins__', '__init__', '__new__', '__del__',
+        '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__',
+        '__getattribute__', '__setattr__', '__delattr__', '__getattr__',
+        '__get__', '__set__', '__set_name__', '__init_subclass__',
+        '__class_getitem__', '__objclass__', '__func__', '__self__',
+    }
+
+    # builtins called by name that bypass the blocked-attribute check
+    # these are fully blocked because they enable dunder access by string name
+    BLOCKED_CALLS: ClassVar[set] = { 'getattr', 'hasattr', 'setattr', 'delattr' }
+
+    # dunder attribute names that are always blocked when accessed via getattr/hasattr/setattr/delattr
+    # these are checked at runtime when the builtin wrappers are called
+    BLOCKED_ATTRS_BY_NAME: ClassVar[set] = {
+        '__class__', '__mro__', '__subclasses__', '__bases__', '__mro_entries__',
+        '__globals__', '__closure__', '__code__', '__defaults__', '__kwdefaults__',
+        '__dict__', '__builtins__', '__init__', '__new__', '__del__',
+        '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__',
+        '__getattribute__', '__setattr__', '__delattr__', '__getattr__',
+        '__get__', '__set__', '__set_name__', '__init_subclass__',
+        '__class_getitem__', '__objclass__', '__func__', '__self__',
+        # interpreter-level classes reachable via __subclasses__()
+        'catch_warnings', 'FileIO', 'BufferedWriter', 'TextIOWrapper',
+        'Popen', 'socket', 'SSLContext', 'WarningMessage',
+    }
 
     def __init__(self):
         self.snapshots = []
@@ -66,6 +96,59 @@ class PythonTracer(BaseTracer):
                 'error': True,
                 'error_type': 'ImportError',
                 'message': f"The following modules are not allowed: {details}",
+                'line': unique_blocked[0][1],
+            }
+        return None
+
+    def _check_blocked_dunders(self, source_code):
+        """Reject dunder attribute access and getattr/hasattr/setattr/delattr calls.
+
+        These reach interpreter internals and enable sandbox escape (e.g.
+        x.__class__.__mro__[1].__subclasses__ -> real __builtins__) without
+        needing any blocked module. AST-based so string-built dunder names
+        (e.g. getattr(x, '__class__')) are caught too.
+        """
+        blocked = []
+        try:
+            tree = ast.parse(source_code)
+        except SyntaxError:
+            return None      # syntax errors are reported separately by trace()
+
+        for node in ast.walk(tree):
+            # x.__dunder__ or x.__dunder__.more
+            if isinstance(node, ast.Attribute):
+                if node.attr in self.BLOCKED_ATTRS:
+                    blocked.append((node.attr, node.lineno))
+            # getattr(x, '__dunder__') / getattr(x, '__dunder__', default)
+            elif isinstance(node, ast.Call):
+                func = node.func
+                name = None
+                if isinstance(func, ast.Name):
+                    name = func.id
+                elif isinstance(func, ast.Attribute):
+                    name = func.attr
+                # only block getattr/hasattr/setattr/delattr when we can see
+                # a dunder literal being passed; otherwise defer to runtime wrapper
+                if name in ('getattr', 'hasattr', 'setattr', 'delattr'):
+                    # check second argument (index 1) for string literal dunder name
+                    if len(node.args) > 1:
+                        arg = node.args[1]
+                        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+                            if arg.value in self.BLOCKED_ATTRS_BY_NAME:
+                                blocked.append((arg.value, node.lineno))
+
+        if blocked:
+            seen = set()
+            unique_blocked = []
+            for name, line_no in blocked:
+                if name not in seen:
+                    seen.add(name)
+                    unique_blocked.append((name, line_no))
+            details = ', '.join(f"'{name}' (line {line_no})" for name, line_no in unique_blocked)
+            return {
+                'error': True,
+                'error_type': 'AttributeError',
+                'message': f"The following attribute access is not allowed: {details}",
                 'line': unique_blocked[0][1],
             }
         return None
@@ -160,6 +243,10 @@ class PythonTracer(BaseTracer):
                 continue
             if callable(var_value):               # skip ALL callables (functions, builtins, lambdas)
                 continue
+            # variable names are interpolated into the canvas by innerHTML;
+            # reject anything that could carry markup (XSS sink in visualizer.js)
+            if any(c in var_name for c in '<>&"\'`'):
+                continue
             sanitized[var_name] = self._make_serializable(var_value)
         return sanitized
 
@@ -170,6 +257,7 @@ class PythonTracer(BaseTracer):
 
         # check for blocked imports AND syntax errors before execution
         import_error = self._check_blocked_imports(source_code)
+        attr_error = self._check_blocked_dunders(source_code)
 
         try:
             compiled_code = compile(source_code, '<traceprism>', 'exec')
@@ -201,7 +289,15 @@ class PythonTracer(BaseTracer):
                 'error': import_error,
                 'output': '',
             }
-        
+
+        if attr_error:
+            return {
+                'snapshots': [],
+                'total_steps': 0,
+                'error': attr_error,
+                'output': '',
+            }
+
         safe_builtins = {
             k: v for k, v in __builtins__.items()
             if k not in self.BLOCKED_BUILTINS
@@ -222,8 +318,42 @@ class PythonTracer(BaseTracer):
 
         safe_builtins['__import__'] = safe_import
 
+        # getattr/hasattr/setattr/delattr reach interpreter internals; replace
+        # them with a version that refuses dunder names so the escape chain
+        # x.__class__.__mro__[1].__subclasses__() cannot be rebuilt by name.
+        def safe_getattr(obj, name, *args):
+            if isinstance(name, str) and name in self.BLOCKED_ATTRS_BY_NAME:
+                raise AttributeError(
+                    f"TracePrism: attribute access '{name}' is not allowed."
+                )
+            return getattr(obj, name, *args)
+
+        def safe_hasattr(obj, name):
+            if isinstance(name, str) and name in self.BLOCKED_ATTRS_BY_NAME:
+                return False
+            return hasattr(obj, name)
+
+        def safe_setattr(obj, name, value):
+            if isinstance(name, str) and name in self.BLOCKED_ATTRS_BY_NAME:
+                raise AttributeError(
+                    f"TracePrism: attribute '{name}' is not allowed."
+                )
+            return setattr(obj, name, value)
+
+        def safe_delattr(obj, name):
+            if isinstance(name, str) and name in self.BLOCKED_ATTRS_BY_NAME:
+                raise AttributeError(
+                    f"TracePrism: attribute '{name}' is not allowed."
+                )
+            return delattr(obj, name)
+
+        safe_builtins['getattr'] = safe_getattr
+        safe_builtins['hasattr'] = safe_hasattr
+        safe_builtins['setattr'] = safe_setattr
+        safe_builtins['delattr'] = safe_delattr
+
         exec_globals = {
-            '__builtins__': safe_builtins,
+            '__builtins__': safe_builtins.copy(),
             '__name__': '__main__',
         }
 

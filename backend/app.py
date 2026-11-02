@@ -24,9 +24,13 @@ app.json.sort_keys = False                # Flask >= 2.3
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
 # S4: Restrict CORS to known origins (env var for flexibility)
-ALLOWED_ORIGINS = os.environ.get(
-    'CORS_ORIGINS','https://traceprism.vercel.app, http://localhost:3000,http://localhost:5000'
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        'CORS_ORIGINS',
+        'https://traceprism.vercel.app,https://traceprism.runs-on.dev,http://localhost:3000,http://localhost:5000'
     ).split(',')
+]
 CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}})
 
 # S3: Register tracers once at startup; instances are created per-request
@@ -170,6 +174,19 @@ def payload_too_large_handler(e):
         'error_type': 'InputTooLarge',
         'message': 'Request payload exceeds 1MB limit.',
     }), 413
+
+
+# S6: defense-in-depth response headers on every route.
+# HSTS is omitted here: it only applies over HTTPS, and on Vercel the edge
+# sets it from vercel.json where TLS termination actually happens.
+@app.after_request
+def set_security_headers(resp):
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    resp.headers['Referrer-Policy'] = 'no-referrer'
+    resp.headers['Cache-Control'] = 'no-store'
+    resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    return resp
 
 
 if __name__ == '__main__':

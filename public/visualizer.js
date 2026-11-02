@@ -33,7 +33,16 @@ function formatVariableValue(value) {
             const items = value.value.map(item => formatVariableValue(item)).join(', ');
             return `{${items}}`;
         }
-        const entries = Object.entries(value).map(([k, v]) => `"${k}": ${formatVariableValue(v)}`).join(', ');
+        const entries = Object.entries(value).map(([k, v]) => {
+            // escape dict keys too - they end up in innerHTML
+            const safeKey = String(k)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+            return `"${safeKey}": ${formatVariableValue(v)}`;
+        }).join(', ');
         return `{${entries}}`;
     }
     return String(value);
@@ -226,13 +235,19 @@ function renderStep(stepIndex) {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
 
+            // variable names are interpolated into innerHTML; escape them too
+            const safeName = name
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
             const isNested = formattedValue.length > 40;
             const nestedAttr = isNested ? ' data-nested="true"' : '';
 
             rowsHTML += `
                 <div class="var-row${changeClass}" data-type="${type}">
                     <span class="var-type-tag">[${type}]</span>
-                    <span class="var-name">${name}</span>
+                    <span class="var-name">${safeName}</span>
                     <span class="var-equals">=</span>
                     <span class="var-value"${nestedAttr}${isNested ? ' title="Click to expand/collapse"' : ''}>${safeValue}</span>
                 </div>
