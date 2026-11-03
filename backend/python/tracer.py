@@ -18,15 +18,7 @@ class PythonTracer(BaseTracer):
     BLOCKED_BUILTINS: ClassVar[set] = { 'exec', 'eval', 'compile', 'open', 'input', 'breakpoint', 'globals', 'locals', 'vars', 'dir', 'getattr', 'hasattr', 'setattr', 'delattr' }
 
     # dunder attribute names that reach interpreter internals and enable sandbox escape
-    BLOCKED_ATTRS: ClassVar[set] = {
-        '__class__', '__mro__', '__subclasses__', '__bases__', '__mro_entries__',
-        '__globals__', '__closure__', '__code__', '__defaults__', '__kwdefaults__',
-        '__dict__', '__builtins__', '__init__', '__new__', '__del__',
-        '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__',
-        '__getattribute__', '__setattr__', '__delattr__', '__getattr__',
-        '__get__', '__set__', '__set_name__', '__init_subclass__',
-        '__class_getitem__', '__objclass__', '__func__', '__self__',
-    }
+    BLOCKED_ATTRS: ClassVar[set] = { '__class__', '__mro__', '__subclasses__', '__bases__', '__mro_entries__', '__globals__', '__closure__', '__code__', '__defaults__', '__kwdefaults__', '__dict__', '__builtins__', '__init__', '__new__', '__del__', '__reduce__', '__reduce_ex__', '__getstate__', '__setstate__', '__getattribute__', '__setattr__', '__delattr__', '__getattr__', '__get__', '__set__', '__set_name__', '__init_subclass__', '__class_getitem__', '__objclass__', '__func__', '__self__'}
 
     # builtins called by name that bypass the blocked-attribute check
     # these are fully blocked because they enable dunder access by string name
@@ -101,13 +93,8 @@ class PythonTracer(BaseTracer):
         return None
 
     def _check_blocked_dunders(self, source_code):
-        """Reject dunder attribute access and getattr/hasattr/setattr/delattr calls.
+        """Reject dunder attribute access and getattr/hasattr/setattr/delattr calls and stop them before compiling the code. These are the only ways to reach interpreter internals and enable sandbox escape (e.g. x.__class__.__mro__[1].__subclasses__ -> real __builtins__) without needing any blocked module. AST-based so string-built dunder names (e.g. getattr(x, '__class__')) are caught too."""
 
-        These reach interpreter internals and enable sandbox escape (e.g.
-        x.__class__.__mro__[1].__subclasses__ -> real __builtins__) without
-        needing any blocked module. AST-based so string-built dunder names
-        (e.g. getattr(x, '__class__')) are caught too.
-        """
         blocked = []
         try:
             tree = ast.parse(source_code)
@@ -318,8 +305,7 @@ class PythonTracer(BaseTracer):
 
         safe_builtins['__import__'] = safe_import
 
-        # getattr/hasattr/setattr/delattr reach interpreter internals; replace
-        # them with a version that refuses dunder names so the escape chain
+        # getattr/hasattr/setattr/delattr reach interpreter internals; replace them with a version that refuses dunder names so the escape chain
         # x.__class__.__mro__[1].__subclasses__() cannot be rebuilt by name.
         def safe_getattr(obj, name, *args):
             if isinstance(name, str) and name in self.BLOCKED_ATTRS_BY_NAME:

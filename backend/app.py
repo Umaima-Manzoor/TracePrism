@@ -177,15 +177,14 @@ def payload_too_large_handler(e):
 
 
 # S6: defense-in-depth response headers on every route.
-# HSTS is omitted here: it only applies over HTTPS, and on Vercel the edge
-# sets it from vercel.json where TLS termination actually happens.
+# HSTS is omitted here: it only applies over HTTPS, and on Vercel the edge server sets it from vercel.json where TLS termination actually happens.
 @app.after_request
 def set_security_headers(resp):
-    resp.headers['X-Content-Type-Options'] = 'nosniff'
-    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    resp.headers['Referrer-Policy'] = 'no-referrer'
-    resp.headers['Cache-Control'] = 'no-store'
-    resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    resp.headers['X-Content-Type-Options'] = 'nosniff'      # tells browsers never try to execute JSON responses as HTML or JavaScript
+    resp.headers['X-Frame-Options'] = 'SAMEORIGIN'          # prevents malicious websites from embedding the app in an iframe and tricking users into clicking buttons (clickjacking)
+    resp.headers['Referrer-Policy'] = 'no-referrer'         # prevents URL leakage to third-party sites 
+    resp.headers['Cache-Control'] = 'no-store'              # prevents sensitive data from being cached in the browser or intermediate proxies
+    resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'     # prevents the app from requesting access to sensitive device features 
     return resp
 
 
