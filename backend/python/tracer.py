@@ -45,6 +45,8 @@ class PythonTracer(BaseTracer):
         self._stdout_buffer = None       # reference to active stdout buffer
         self._last_stdout_length = 0     # tracks how much output was captured before this step
         self._start_time = 0            # timestamp when execution began
+        self._frame_id_map = {}         # maps id(frame) -> sequential frame_id integer
+        self._next_frame_id = 0          # auto-incrementing frame ID counter
 
     def _check_blocked_imports(self, source_code):       # scan all imports before execution
         blocked = []
@@ -241,6 +243,8 @@ class PythonTracer(BaseTracer):
     def trace(self, source_code):       # main func called by Flask API
         self.snapshots = []
         self._step_counter = 0
+        self._frame_id_map = {}
+        self._next_frame_id = 0
 
         # check for blocked imports AND syntax errors before execution
         import_error = self._check_blocked_imports(source_code)
@@ -431,6 +435,26 @@ class PythonTracer(BaseTracer):
             if curr.f_code.co_filename == '<traceprism>':
                 func_name = curr.f_code.co_name
 
+                # Assign or retrieve stable sequential integer for this frame instance
+                mem_id = id(curr)
+                if mem_id not in self._frame_id_map:
+                    self._frame_id_map[mem_id] = self._next_frame_id
+                    self._next_frame_id += 1
+                frame_id = self._frame_id_map[mem_id]
+
+                # Find parent frame_id by walking up to previous <traceprism> frame
+                parent_id = None
+                parent_curr = curr.f_back
+                while parent_curr is not None:
+                    if parent_curr.f_code.co_filename == '<traceprism>':        # validation check - frames of only user submitted code
+                        p_mem_id = id(parent_curr)
+                        if p_mem_id not in self._frame_id_map:
+                            self._frame_id_map[p_mem_id] = self._next_frame_id
+                            self._next_frame_id += 1
+                        parent_id = self._frame_id_map[p_mem_id]
+                        break
+                    parent_curr = parent_curr.f_back
+
                 if func_name == '<module>':
                     call_label = 'main'
                 else:
@@ -447,6 +471,8 @@ class PythonTracer(BaseTracer):
                     call_label = f"{func_name}({args_str})"
 
                 stack.append({
+                    'frame_id': frame_id,
+                    'parent_frame_id': parent_id,
                     'func_name': 'main' if func_name == '<module>' else func_name,
                     'call_label': call_label,
                     'line': curr.f_lineno
