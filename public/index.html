@@ -59,6 +59,10 @@
             <section class="canvas-pane" aria-label="Execution Canvas">
                 <div class="pane-header">
                     <button id="btn-clear" class="btn-clear">Clear</button>
+                    <div class="view-toggle-group" role="group" aria-label="Visualization View Mode">
+                        <button id="view-toggle-stack" class="view-toggle-btn active" title="Linear Stack View (Keyboard: Alt+1)" type="button">Stack</button>
+                        <button id="view-toggle-tree" class="view-toggle-btn" title="Recursion Tree View (Keyboard: Alt+2)" type="button">Tree</button>
+                    </div>
                     <span id="viz-mode" class="status-tag tag-accent">IDLE</span>
                 </div>
                 <div id="viz-canvas" class="viz-canvas" aria-live="polite" aria-atomic="false">     <!-- annouces content changes when the user is idle (not interrupting) - only annouces changed values, not everything-->
