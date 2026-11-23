@@ -34,7 +34,6 @@ function formatVariableValue(value) {
             return `{${items}}`;
         }
         const entries = Object.entries(value).map(([k, v]) => {
-            // escape dict keys too - they end up in innerHTML
             const safeKey = String(k)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -101,12 +100,12 @@ function precomputeAllLocals() {
         const snap = AppState.snapshots[i];
 
         if (snap.is_keyframe) {
-            currentLocals = Object.assign({}, snap.locals || {});     // reset baseline at keyframe
+            currentLocals = Object.assign({}, snap.locals || {});
         } else if (snap.locals_delta) {
-            Object.assign(currentLocals, snap.locals_delta);          // merge delta on top
+            Object.assign(currentLocals, snap.locals_delta);
         }
 
-        AppState.reconstructedLocals.push(Object.assign({}, currentLocals));  // store snapshot of state
+        AppState.reconstructedLocals.push(Object.assign({}, currentLocals));
     }
 }
 
@@ -130,6 +129,11 @@ const ERROR_SUGGESTIONS = {
 
 // Persistent overflow state — survives across re-renders to prevent hint flicker
 let outputOverflows = false;
+
+// Call visualization mode: 'stack' (linear) or 'tree' (recursion graph)
+if (typeof AppState !== 'undefined') {
+    AppState.callViewMode = 'stack';
+}
 
 // standalone error renderer - dark card on peach bg, vertically centered
 function renderError(errorObj) {
@@ -187,7 +191,7 @@ function renderStep(stepIndex) {
     if (stepIndex < 0 || !AppState.snapshots || !AppState.snapshots[stepIndex]) {
         highlightLine(null);
         DOM.vizCanvas.parentElement.classList.remove('canvas-active');
-        outputOverflows = false;     // reset overflow state for new trace
+        outputOverflows = false;
         DOM.vizCanvas.innerHTML = `
             <div class="canvas-placeholder">
                 <span class="placeholder-title">No Active Execution</span>
@@ -235,7 +239,6 @@ function renderStep(stepIndex) {
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
 
-            // variable names are interpolated into innerHTML; escape them too
             const safeName = name
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -263,25 +266,27 @@ function renderStep(stepIndex) {
         `;
     }
 
-    // CALL STACK SECTION (grows upward, new frames on top, bold ➤ arrow)
+    // CALL STACK / TREE SECTION
     let stackHTML = '';
     const stack = snapshot.stack || [];
-    const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
 
-    if (stack.length > 1) {
+    if (AppState.callViewMode === 'tree') {
+        stackHTML = renderTreeSection(snapshot, stepIndex);
+    } else if (stack.length > 1) {
+        const prevStack = stepIndex > 0 ? (AppState.snapshots[stepIndex - 1].stack || []) : [];
         const prevLabels = new Set(prevStack.map(f => typeof f === 'object' ? f.call_label : f));
         let framesHTML = '';
 
         for (let i = 0; i < stack.length; i++) {
             const frame = stack[i];
-            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name) : frame;
+            const funcName = typeof frame === 'object' ? (frame.call_label || frame.func_name || frame.name) : frame;
             const isActive = (i === stack.length - 1);
             const activeClass = isActive ? ' active-frame' : '';
 
             const isNewFrame = !prevLabels.has(funcName);
             const animClass = isNewFrame ? ' frame-new' : '';
 
-            const safeFuncName = funcName
+            const safeFuncName = String(funcName)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
@@ -293,7 +298,6 @@ function renderStep(stepIndex) {
             `;
         }
 
-        // With column-reverse, the returning frame is visually at the top.
         let returnBadge = '';
         if (snapshot.event === 'return') {
             const safeRetVal = formatVariableValue(snapshot.return_value)
@@ -376,6 +380,8 @@ function renderStep(stepIndex) {
     // UPDATE STATUS MODE TAG
     if (snapshot.exception) {
         DOM.vizMode.innerText = 'EXCEPTION';
+    } else if (AppState.callViewMode === 'tree') {
+        DOM.vizMode.innerText = 'RECURSION TREE';
     } else if (varsHTML && stackHTML) {
         DOM.vizMode.innerText = 'VARS + STACK';
     } else if (stackHTML) {
@@ -396,15 +402,12 @@ function renderStep(stepIndex) {
     // Inject HTML
     DOM.vizCanvas.innerHTML = varsHTML + stackHTML + outputHTML + errorOverlayHTML;
 
-    // Restore state and set up handlers (nested expand handled by delegation at bottom)
+    // Restore state and set up handlers
     const outputBlock = DOM.vizCanvas.querySelector('.output-block');
     const outputHint = DOM.vizCanvas.querySelector('.output-hint');
 
     if (outputBlock && outputHint) {
-        // Only check overflow if we haven't already detected it
-        // Once overflow is detected, it stays true for the entire trace
         if (!outputOverflows) {
-            // Temporarily collapse to measure true overflow
             outputBlock.classList.remove('expanded');
             outputOverflows = outputBlock.scrollHeight > 155;
         }
@@ -420,7 +423,7 @@ function renderStep(stepIndex) {
             outputBlock.classList.add('no-hint');
         }
 
-        outputBlock.scrollTop = prevScrollTop
+        outputBlock.scrollTop = prevScrollTop;
 
         const toggleOutput = () => {
             outputBlock.classList.toggle('expanded');
@@ -431,7 +434,7 @@ function renderStep(stepIndex) {
 
         outputBlock.addEventListener('click', toggleOutput);
         outputHint.addEventListener('click', (e) => {
-            e.stopPropagation();        // prevents flickering
+            e.stopPropagation();
             toggleOutput();
         });
     } else if (outputBlock) {
@@ -457,3 +460,211 @@ DOM.vizCanvas.addEventListener('click', function(e) {
         target.classList.add('var-expanded');
     }
 });
+
+// segmented button view toggle listeners
+function setupViewToggleListeners() {
+    const stackBtn = document.getElementById('view-toggle-stack');
+    const treeBtn = document.getElementById('view-toggle-tree');
+    if (!stackBtn || !treeBtn) return;
+
+    stackBtn.addEventListener('click', () => {
+        if (AppState.callViewMode === 'stack') return;
+        AppState.callViewMode = 'stack';
+        stackBtn.classList.add('active');
+        treeBtn.classList.remove('active');
+        renderStep(AppState.currentStep);
+    });
+
+    treeBtn.addEventListener('click', () => {
+        if (AppState.callViewMode === 'tree') return;
+        AppState.callViewMode = 'tree';
+        treeBtn.classList.add('active');
+        stackBtn.classList.remove('active');
+        renderStep(AppState.currentStep);
+    });
+}
+
+// --- 1. TREE SECTION RENDERER ---
+function renderTreeSection(snapshot, stepIndex) {
+    const treeData = buildRecursionTree(stepIndex);
+    if (!treeData.roots || treeData.roots.length === 0) {
+        return '';
+    }
+
+    const { layout, totalWidth, totalHeight } = calculateTreeLayout(treeData);
+
+    const activeFrameId = (snapshot.stack && snapshot.stack.length > 0)
+        ? snapshot.stack[snapshot.stack.length - 1].frame_id
+        : null;
+
+    let svgPathsHTML = '';
+    layout.forEach(node => {
+        if (node.parentId !== null) {
+            const parent = layout.find(n => n.id === node.parentId);
+            if (parent) {
+                const isEdgeActive = snapshot.stack.some(f => f.frame_id === node.id);
+                svgPathsHTML += generateTreeEdgeSVG(parent, node, isEdgeActive);
+            }
+        }
+    });
+
+    let nodesHTML = '';
+    layout.forEach(node => {
+        const isActive = (node.id === activeFrameId);
+        nodesHTML += generateTreeNodeHTML(node, isActive);
+    });
+
+    return `
+        <div class="viz-section">
+            <div class="viz-section-label">Recursion Tree</div>
+            <div class="tree-container">
+                <div class="tree-viewport" style="width: ${Math.max(totalWidth + 40, 260)}px; height: ${Math.max(totalHeight + 40, 160)}px;">
+                    <svg class="tree-svg-layer" width="${Math.max(totalWidth + 40, 260)}" height="${Math.max(totalHeight + 40, 160)}">
+                        ${svgPathsHTML}
+                    </svg>
+                    <div class="tree-nodes-layer">
+                        ${nodesHTML}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// --- 2. HISTORICAL TREE RECONSTRUCTION ---
+function buildRecursionTree(stepIndex) {
+    const nodesMap = new Map();
+    const roots = [];
+
+    for (let i = 0; i <= stepIndex; i++) {
+        const snap = AppState.snapshots[i];
+        if (!snap || !snap.stack) continue;
+
+        snap.stack.forEach(frame => {
+            if (typeof frame === 'object' && frame.frame_id !== undefined) {
+                if (!nodesMap.has(frame.frame_id)) {
+                    const node = {
+                        id: frame.frame_id,
+                        name: frame.func_name || frame.name || 'func',
+                        parentId: frame.parent_frame_id !== undefined ? frame.parent_frame_id : null,
+                        locals: Object.assign({}, frame.locals || {}),
+                        children: [],
+                        returnValue: null,
+                        isReturned: false
+                    };
+                    nodesMap.set(frame.frame_id, node);
+
+                    if (node.parentId === null) {
+                        roots.push(node);
+                    } else {
+                        const parent = nodesMap.get(node.parentId);
+                        if (parent && !parent.children.some(c => c.id === node.id)) {
+                            parent.children.push(node);
+                        }
+                    }
+                }
+            }
+        });
+
+        if (snap.event === 'return' && snap.stack && snap.stack.length > 0) {
+            const topFrame = snap.stack[snap.stack.length - 1];
+            const targetId = typeof topFrame === 'object' ? topFrame.frame_id : null;
+            if (targetId !== null && nodesMap.has(targetId)) {
+                const node = nodesMap.get(targetId);
+                node.returnValue = snap.return_value;
+                node.isReturned = true;
+            }
+        }
+    }
+
+    return { roots, nodesMap };
+}
+
+// --- 3. 2D COORDINATE LAYOUT CALCULATION ---
+function calculateTreeLayout(treeData) {
+    const nodeWidth = 120;
+    const nodeHeight = 44;
+    const horizontalGap = 24;
+    const verticalGap = 48;
+
+    const layout = [];
+    let currentLeafX = 20;
+
+    function layoutSubtree(node, depth) {
+        const y = 20 + depth * (nodeHeight + verticalGap);
+
+        if (node.children.length === 0) {
+            const x = currentLeafX;
+            currentLeafX += nodeWidth + horizontalGap;
+            const positionedNode = { ...node, x, y, width: nodeWidth, height: nodeHeight };
+            layout.push(positionedNode);
+            return x;
+        }
+
+        const childrenXCoords = [];
+        node.children.forEach(child => {
+            childrenXCoords.push(layoutSubtree(child, depth + 1));
+        });
+
+        const minChildX = childrenXCoords[0];
+        const maxChildX = childrenXCoords[childrenXCoords.length - 1];
+        const x = minChildX + (maxChildX - minChildX) / 2;
+
+        const positionedNode = { ...node, x, y, width: nodeWidth, height: nodeHeight };
+        layout.push(positionedNode);
+        return x;
+    }
+
+    treeData.roots.forEach(root => {
+        layoutSubtree(root, 0);
+    });
+
+    const totalWidth = currentLeafX;
+    const totalHeight = layout.length > 0 ? Math.max(...layout.map(n => n.y + n.height)) : 100;
+
+    return { layout, totalWidth, totalHeight };
+}
+
+// --- 4. SVG RAILWAY EDGE GENERATOR ---
+function generateTreeEdgeSVG(parent, child, isEdgeActive) {
+    const startX = parent.x + (parent.width / 2);
+    const startY = parent.y + parent.height;
+    const endX = child.x + (child.width / 2);
+    const endY = child.y;
+
+    const midY = startY + ((endY - startY) / 2);
+    const pathData = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`;
+    const activeClass = isEdgeActive ? ' tree-branch-line active' : ' tree-branch-line';
+
+    return `<path d="${pathData}" class="${activeClass}" />`;
+}
+
+// --- 5. HTML NODE CARD GENERATOR ---
+function generateTreeNodeHTML(node, isActive) {
+    const activeClass = isActive ? ' active-node' : '';
+
+    const argsList = Object.entries(node.locals)
+        .map(([k, v]) => `${k}=${formatVariableValue(v)}`)
+        .join(', ');
+
+    const safeLabel = `${node.name}(${argsList})`
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    let returnHTML = '';
+    if (node.isReturned) {
+        const safeReturnVal = formatVariableValue(node.returnValue)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        returnHTML = `<div class="tree-node-return">→ ${safeReturnVal}</div>`;
+    }
+
+    return `
+        <div class="tree-node${activeClass}" style="left: ${node.x}px; top: ${node.y}px; width: ${node.width}px;" title="${safeLabel}">
+            <div class="tree-node-title">${safeLabel}</div>
+            ${returnHTML}
+        </div>
+    `;
+}
